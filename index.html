@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <style>
   :root {
@@ -82,7 +83,7 @@
   @media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
 
   label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-  input[type=text], input[type=email], input[type=number], input[type=search], input[type=date], select {
+  input[type=text], input[type=email], input[type=password], input[type=number], input[type=search], input[type=date], select {
     width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid var(--line); border-radius: 10px; background: #fff;
   }
   input:focus, select:focus, .btn:focus-visible, .tab:focus-visible, .choice:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-color: var(--blue); }
@@ -116,11 +117,22 @@
   .stepper input { text-align: center; font-size: 22px; font-weight: 700; min-height: 56px; }
   .back { margin-bottom: 4px; }
 
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px; font-weight: 600; max-width: calc(100% - 32px); z-index: 10; }
   .table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .table th, .table td { text-align: left; padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
   .table th { border-top: 0; color: var(--muted); font-weight: 600; }
-  .scroll { overflow-x: auto; }
+  .scroll { overflow-x: auto; position: relative; }
+  @media (max-width: 640px) {
+    .items-table thead { display: none; }
+    .items-table, .items-table tbody { display: block; }
+    .items-table tr { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+    .items-table tr:first-child { border-top: 0; }
+    .items-table td { display: block; border: 0; padding: 0; min-width: 0; }
+    .items-table td:nth-child(1), .items-table td:nth-child(2) { grid-column: 1 / -1; }
+    .items-table td[data-label]::before { content: attr(data-label); display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    .items-table input { min-width: 0 !important; width: 100% !important; }
+  }
   .txlines { margin: 6px 0 0; padding-left: 18px; }
 
   .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
@@ -140,47 +152,23 @@
 <div id="app"></div>
 <div id="fileReader" hidden></div>
 <script>
-// Atlas Free Inventory: clickable prototype. Data is saved only in this browser (localStorage).
-const KEY = 'atlasfree-inventory-v1';
+// Atlas Free Inventory. Data lives in Supabase and is shared by the whole team; the access rules are in supabase/setup.sql.
+const SUPABASE_URL = 'https://carcpunahdjefmbgyxfc.supabase.co';
+// The publishable key is made to sit in a web page; the database rules decide what each person may do.
+const SUPABASE_KEY = 'sb_publishable_hCqGc_Je1kH7ETqB2iatLg_I8mP-i6h';
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 const TYPES = {
   general: { label: 'General checkout', hint: 'Everyday use, office or outreach' },
   event:   { label: 'Specific event', hint: 'Items for an event campaign' },
   donor:   { label: 'Donor gift', hint: 'A gift for a named donor' },
   merch:   { label: 'Merch', hint: 'Shirts, totes and other merch' },
 };
+const NOT_TEAM = 'This email is not on the team. Ask an admin to add you in Admin › People.';
 
-function seed() {
-  const items = [
-    ['AF-0001', 'Atlas Free T-shirt (M)', 'Storage closet, shelf A', 42],
-    ['AF-0002', 'Atlas Free T-shirt (L)', 'Storage closet, shelf A', 35],
-    ['AF-0003', 'Tote bag', 'Storage closet, shelf B', 60],
-    ['AF-0004', 'Water bottle', 'Storage closet, shelf B', 24],
-    ['AF-0005', 'Sticker pack', 'Front desk drawer', 150],
-    ['AF-0006', 'Brochure (box of 100)', 'Office, cabinet 2', 8],
-    ['AF-0007', 'Table cloth (blue)', 'Event bin 1', 3],
-    ['AF-0008', 'Pull-up banner', 'Event bin 1', 2],
-    ['AF-0009', 'Donor thank-you mug', 'Office, cabinet 1', 18],
-    ['AF-0010', 'Framed print', 'Office, cabinet 1', 0],
-  ].map(([code, name, location, qty], i) => ({ id: 'i' + (i + 1), code, name, location, qty }));
-  return {
-    items,
-    events: [{ id: 'e1', name: 'Sample: Community 5K', date: '', status: 'open', closeRequestedBy: null }],
-    requests: [],
-    tx: [],
-    admins: [],
-    session: null,
-    seq: 100,
-  };
-}
-function load() {
-  try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (e) {}
-  return seed();
-}
-function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
-function nextId(p) { db.seq += 1; return p + db.seq; }
-
-let db = load();
-let view = db.session ? 'home' : 'login';
+const emptyDb = () => ({ items: [], events: [], requests: [], tx: [], members: [], session: null });
+let db = emptyDb();
+let view = 'loading';
+let loginMode = 'signin';   // 'signin' | 'signup' (first time: choose a password)
 let adminTab = 'activity';
 let flow = null;      // { dir: 'out'|'in', type, eventId, donor, lines: [{itemId, qty, donor}], current }
 let lastTx = null;
@@ -188,12 +176,60 @@ let search = '';
 let actFilter = { dir: '', type: '', q: '' };
 let scanner = null;
 let handling = false;
+let busy = false;
+
+async function loadAll() {
+  const res = await Promise.all([
+    sb.from('items').select('*').order('id'),
+    sb.from('events').select('*').order('id'),
+    sb.from('event_requests').select('*').order('id'),
+    sb.from('transactions').select('*, transaction_lines(*)').order('id'),
+    sb.from('members').select('*').order('added_at'),
+  ]);
+  const bad = res.find((r) => r.error); if (bad) throw bad.error;
+  const [items, events, requests, tx, members] = res.map((r) => r.data);
+  db.items = items.map((i) => ({ id: String(i.id), code: i.code, name: i.name, location: i.location, qty: i.qty, deleted: i.deleted }));
+  db.events = events.map((e) => ({ id: String(e.id), name: e.name, date: e.event_date || '', status: e.status, closeRequestedBy: e.close_requested_by }));
+  db.requests = requests.map((r) => ({ id: String(r.id), name: r.name, date: r.event_date || '', by: r.requested_by, at: r.created_at }));
+  db.tx = tx.map((t) => ({ id: String(t.id), dir: t.dir, type: t.type, eventId: t.event_id ? String(t.event_id) : null, donor: t.donor, user: t.user_email, at: t.created_at,
+    lines: t.transaction_lines.sort((a, b) => a.id - b.id).map((l) => ({ itemId: String(l.item_id), qty: l.qty, donor: l.donor })) }));
+  db.members = members.map((m) => ({ email: m.email, admin: m.is_admin }));
+}
+// The database's own messages (stock, last admin, closed event) are written for people; anything else gets a plain wrapper.
+function errText(e) {
+  const m = e?.message || '';
+  if (e?.code === 'P0001') return m;
+  if (e?.code === '23505') return 'That already exists.';
+  if (/fetch|network|load failed/i.test(m)) return 'No connection. Check your internet and try again.';
+  return 'That didn\'t save: ' + m;
+}
+// Sends one change, then reloads so this screen shows what the whole team sees.
+// Changes end in .select(): no rows back means the access rules refused it.
+async function change(request, okMsg) {
+  const { data, error } = await request;
+  const refused = !error && Array.isArray(data) && data.length === 0;
+  if (error) toast(errText(error)); else if (refused) toast('You don\'t have permission to do that.'); else if (okMsg) toast(okMsg);
+  await refresh();
+  return !error && !refused;
+}
+async function refresh() {
+  try { await loadAll(); } catch (e) { toast(errText(e)); return; }
+  if (db.session && !member(db.session)) { signOut(NOT_TEAM); return; }
+  // Only redraw screens that show shared data; the check-out screens keep what the person is typing.
+  if (['home', 'admin', 'event', 'success', 'labels'].includes(view)) render();
+}
 
 const $ = (id) => document.getElementById(id);
 const h = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const item = (id) => db.items.find((i) => i.id === id);
+// Deleted items stay in db.items (marked deleted) so past check-outs still name them.
+const active = () => db.items.filter((i) => !i.deleted);
+const itemName = (id) => { const i = item(id); return i ? i.name + (i.deleted ? ' (deleted)' : '') : 'Unknown item'; };
 const ev = (id) => db.events.find((e) => e.id === id);
-const isAdmin = () => !!db.session && db.admins.includes(db.session);
+const member = (email) => db.members.find((m) => m.email === email);
+const isAdmin = () => !!member(db.session)?.admin;
+const adminCount = () => db.members.filter((m) => m.admin).length;
+const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 const fmtDate = (iso) => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 // In-page yes/no box (the claude.ai viewer blocks the browser's confirm()).
@@ -236,6 +272,7 @@ async function go(v) {
   await stopScanner();
   view = v; render(); window.scrollTo(0, 0);
   if (v === 'scan') startScanner();
+  if (v === 'home' || v === 'admin' || v === 'event') refresh();   // pick up what teammates changed
 }
 
 function eventOutstanding(eventId) {
@@ -253,6 +290,7 @@ function eventAllBack(eventId) {
 function render() {
   const app = $('app');
   if (view === 'login') { app.innerHTML = vLogin(); return; }
+  if (view === 'loading') { app.innerHTML = `<header class="topbar"><div class="topbar-inner"><div class="brand">Atlas Free<small>Inventory</small></div></div></header><main><p class="muted">Loading…</p></main>`; return; }
   const pending = db.requests.length + db.events.filter((e) => e.status === 'close_requested').length;
   const tab = view === 'admin' ? 'admin' : 'home';
   app.innerHTML = `
@@ -270,23 +308,26 @@ function render() {
 }
 
 function vLogin() {
+  const up = loginMode === 'signup';
   return `
   <header class="topbar"><div class="topbar-inner"><div class="brand">Atlas Free<small>Inventory</small></div></div></header>
   <main><div class="card stack" style="max-width:440px;margin:24px auto">
-    <h1>Sign in</h1>
-    <p class="muted">Use your work email. Every check-out and check-in records who did it.</p>
+    <h1>${up ? 'Set your password' : 'Sign in'}</h1>
+    <p class="muted">${up ? 'First time here? Use the email an admin added to the team, then choose a password.' : 'Use your work email. Every check-out and check-in records who did it.'}</p>
     <form onsubmit="event.preventDefault();signIn()" class="stack">
       <div><label for="email">Email</label><input id="email" type="email" autocomplete="email" required placeholder="you@example.org"></div>
+      <div><label for="password">${up ? 'Choose a password (8 or more characters)' : 'Password'}</label><input id="password" type="password" autocomplete="${up ? 'new-password' : 'current-password'}" required minlength="8"></div>
       <div id="loginErr" class="error" role="alert"></div>
-      <button class="btn block" type="submit">Continue</button>
+      <button class="btn block" id="loginBtn" type="submit">${up ? 'Set password and sign in' : 'Sign in'}</button>
     </form>
-    <p class="small muted">Prototype: no password yet. The first email to sign in on this device becomes the admin. The real version sends a sign-in link to your email.</p>
+    <p class="small">${up ? 'Already set a password?' : 'First time here?'} <button class="link" onclick="loginMode='${up ? 'signin' : 'signup'}';render()">${up ? 'Sign in' : 'Set your password'}</button></p>
+    <p class="small muted">Only team members added by an admin can sign in. Forgot your password? Ask an admin.</p>
   </div></main>`;
 }
 
 function vHome() {
   const q = search.trim().toLowerCase();
-  const list = db.items.filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q));
+  const list = active().filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q));
   return `<div class="stack">
     <div class="two">
       <button class="btn btn-xl block" onclick="startFlow('out')">Check out</button>
@@ -308,7 +349,7 @@ function itemRows(list) {
 }
 function renderList() {
   const q = search.trim().toLowerCase();
-  $('itemList').innerHTML = itemRows(db.items.filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q)));
+  $('itemList').innerHTML = itemRows(active().filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q)));
 }
 
 function verb() { return flow.dir === 'out' ? 'checking out' : 'checking in'; }
@@ -387,13 +428,14 @@ function vScan() {
       <div><label for="manualCode">Or type the code on the label</label>
         <div class="row"><input class="grow" id="manualCode" type="text" placeholder="e.g. AF-0003" autocapitalize="characters" style="flex:1"><button class="btn sm" type="submit">Find</button></div></div>
       <div><label for="pickItem">Or pick from the list (prototype helper)</label>
-        <select id="pickItem" onchange="if(this.value)onCode(this.value)"><option value="">Choose an item…</option>${db.items.map((i) => `<option value="${h(i.code)}">${h(i.name)} (${i.qty} in stock)</option>`).join('')}</select></div>
+        <select id="pickItem" onchange="if(this.value)onCode(this.value)"><option value="">Choose an item…</option>${active().map((i) => `<option value="${h(i.code)}">${h(i.name)} (${i.qty} in stock)</option>`).join('')}</select></div>
     </form>
     ${linesList()}
   </div>`;
 }
 
 function vItem() {
+  if (!flow?.current) return `<p class="muted">Saving…</p>`;   // between "Done" and the saved receipt
   const c = flow.current, it = item(c.itemId);
   let note = `${it.qty} in stock · ${h(it.location)}`;
   if (flow.dir === 'out') {
@@ -442,7 +484,7 @@ function vSuccess() {
       <span class="pill ${t.dir}">${t.dir === 'out' ? 'Checked out' : 'Checked in'}</span>
       <h1>All set</h1>
       <p class="muted">${h(TYPES[t.type].label)}${t.eventId ? ' · ' + h(ev(t.eventId).name) : ''}${t.donor ? ' · for ' + h(t.donor) : ''} · ${fmtDate(t.at)}</p>
-      <ul class="txlines">${t.lines.map((l) => `<li>${l.qty} × ${h(item(l.itemId).name)}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
+      <ul class="txlines">${t.lines.map((l) => `<li>${l.qty} × ${h(itemName(l.itemId))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
     </div>
     ${eventBox}
     <button class="btn ghost block" onclick="flow=null;go('home')">Back to inventory</button>
@@ -477,7 +519,7 @@ function aActivity() {
       <div class="grow">
         <div class="row" style="gap:8px"><span class="pill ${t.dir}">${t.dir === 'out' ? 'Out' : 'In'}</span><strong>${h(TYPES[t.type].label)}</strong>${t.eventId ? `<span class="small">${h(ev(t.eventId)?.name)}</span>` : ''}${t.donor ? `<span class="small">for ${h(t.donor)}</span>` : ''}</div>
         <div class="small muted">${h(t.user)} · ${fmtDate(t.at)}</div>
-        <ul class="txlines small">${t.lines.map((l) => `<li>${l.qty} × ${h(item(l.itemId)?.name)}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
+        <ul class="txlines small">${t.lines.map((l) => `<li>${l.qty} × ${h(itemName(l.itemId))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
       </div></li>`).join('')}</ul>` : `<p class="muted">${db.tx.length ? 'Nothing matches these filters.' : 'No activity yet. Check-outs and check-ins will show here.'}</p>`}
   </div>`;
 }
@@ -496,12 +538,13 @@ function aItems() {
     </form>
     <div class="card stack">
       <div class="row"><h2 class="grow">Items</h2><button class="btn ghost sm" onclick="go('labels')">Print QR labels</button></div>
-      <div class="scroll"><table class="table"><thead><tr><th>Item</th><th>Location</th><th>Qty</th></tr></thead><tbody>
-      ${db.items.map((i) => `<tr><td><strong>${h(i.name)}</strong><br><span class="muted">${h(i.code)}</span></td>
-        <td><input type="text" aria-label="Location of ${h(i.name)}" value="${h(i.location)}" onchange="editItem('${i.id}','location',this.value)" style="min-width:160px"></td>
-        <td><input type="number" min="0" aria-label="Quantity of ${h(i.name)}" value="${i.qty}" onchange="editItem('${i.id}','qty',this.value)" style="width:90px"></td></tr>`).join('')}
+      <div class="scroll"><table class="table items-table"><thead><tr><th>Item</th><th>Location</th><th>Qty</th><th><span class="sr-only">Delete</span></th></tr></thead><tbody>
+      ${active().map((i) => `<tr><td data-label="Item"><input type="text" aria-label="Name of ${h(i.name)}" value="${h(i.name)}" onchange="editItem('${i.id}','name',this.value)" style="min-width:180px"><div class="small muted" style="margin-top:4px">${h(i.code)}</div></td>
+        <td data-label="Location"><input type="text" aria-label="Location of ${h(i.name)}" value="${h(i.location)}" onchange="editItem('${i.id}','location',this.value)" style="min-width:160px"></td>
+        <td data-label="Quantity"><input type="number" min="0" aria-label="Quantity of ${h(i.name)}" value="${i.qty}" onchange="editItem('${i.id}','qty',this.value)" style="width:90px"></td>
+        <td><button class="btn danger sm" onclick="deleteItem('${i.id}')" aria-label="Delete ${h(i.name)}">Delete</button></td></tr>`).join('')}
       </tbody></table></div>
-      <p class="small muted">Changing a quantity here is a stock count correction; it is not logged as a check-out.</p>
+      <p class="small muted">Edit a name, location or quantity and it saves when you leave the box. Changing a quantity here is a stock count correction; it is not logged as a check-out.</p>
     </div></div>`;
 }
 function aEvents() {
@@ -525,20 +568,27 @@ function aEvents() {
 }
 function aPeople() {
   return `<div class="stack"><div class="card stack">
-    <h2>Admins</h2>
-    <p class="small muted">Admins see this tab: all activity, items, events and requests. Everyone else can check items in and out.</p>
-    <ul class="items">${db.admins.map((a) => `<li><div class="grow">${h(a)}${a === db.session ? ' <span class="small muted">(you)</span>' : ''}</div>
-      ${db.admins.length > 1 ? `<button class="link" onclick="removeAdmin('${h(a)}')">Remove</button>` : ''}</li>`).join('')}</ul>
-    <form class="row" onsubmit="event.preventDefault();addAdmin()"><input class="grow" id="naEmail" type="email" required placeholder="email@example.org" aria-label="New admin email" style="flex:1"><button class="btn sm" type="submit">Make admin</button></form>
+    <h2>Team</h2>
+    <p class="small muted">Only the emails on this list can sign in. <strong>Members</strong> check items in and out. <strong>Admins</strong> can also see this Admin area: activity, items, events and the team.</p>
+    <form class="stack" onsubmit="event.preventDefault();addMember()">
+      <div><label for="nmEmail">Add a team member</label><input id="nmEmail" type="email" required placeholder="name@example.org"></div>
+      <label class="row" style="gap:8px;font-weight:500"><input id="nmAdmin" type="checkbox" style="width:20px;height:20px"> Make them an admin</label>
+      <div id="nmErr" class="error" role="alert"></div>
+      <button class="btn" type="submit">Add to team</button>
+    </form>
+    <ul class="items">${db.members.map((m, i) => `<li>
+      <div class="grow" style="min-width:0"><div class="name" style="overflow-wrap:anywhere">${h(m.email)}${m.email === db.session ? ' <span class="small muted">(you)</span>' : ''}</div></div>
+      <select aria-label="Role for ${h(m.email)}" onchange="setRole(${i}, this.value)" style="width:auto;min-height:40px">
+        <option value="member" ${m.admin ? '' : 'selected'}>Member</option><option value="admin" ${m.admin ? 'selected' : ''}>Admin</option></select>
+      <button class="link" onclick="removeMember(${i})" aria-label="Remove ${h(m.email)}">Remove</button></li>`).join('')}</ul>
   </div>
-  <div class="card stack"><h2>Prototype data</h2><p class="small muted">Everything is saved only in this browser. Reset puts the sample items back and clears all activity.</p>
-    <button class="btn danger sm" onclick="resetAll()">Reset sample data</button></div></div>`;
+  </div>`;
 }
 function vLabels() {
   return `<div class="stack">
     <div class="row noprint"><button class="link" onclick="adminTab='items';go('admin')">← Back</button><span class="grow"></span><button class="btn sm" onclick="downloadLabels()">Download label sheet</button></div>
     <p class="small muted noprint">Download the sheet, open it on a computer, print it on sticker paper, then put each label on its item or shelf.</p>
-    <div class="labels">${db.items.map((i) => `<div class="label"><img alt="QR code for ${h(i.code)}" src="${qrUrl(i.code)}"><div class="lname">${h(i.name)}</div><div class="lcode">${h(i.code)}</div></div>`).join('')}</div>
+    <div class="labels">${active().map((i) => `<div class="label"><img alt="QR code for ${h(i.code)}" src="${qrUrl(i.code)}"><div class="lname">${h(i.name)}</div><div class="lcode">${h(i.code)}</div></div>`).join('')}</div>
   </div>`;
 }
 function qrUrl(text) {
@@ -547,13 +597,45 @@ function qrUrl(text) {
 }
 
 // ---------- actions ----------
-function signIn() {
-  const email = $('email').value.trim().toLowerCase();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $('loginErr').textContent = 'Enter a valid email address.'; return; }
-  if (!db.admins.length) db.admins.push(email);
-  db.session = email; save(); go('home');
+async function boot() {
+  if (!sb) { $('app').innerHTML = '<main><div class="card">Atlas Free Inventory could not load. Check your internet connection and reload the page.</div></main>'; return; }
+  const { data } = await sb.auth.getSession();
+  if (data.session) await enter(data.session.user.email); else go('login');
 }
-function signOut() { db.session = null; flow = null; save(); go('login'); }
+async function enter(email) {
+  db.session = email.toLowerCase();
+  try { await loadAll(); } catch (e) { await signOut(errText(e)); return; }
+  if (!member(db.session)) { await signOut(NOT_TEAM); return; }
+  go('home');
+}
+async function signIn() {
+  const email = $('email').value.trim().toLowerCase(), password = $('password').value;
+  const err = (m) => { $('loginErr').textContent = m; };
+  if (!validEmail(email)) return err('Enter a valid email address.');
+  if (password.length < 8) return err('Passwords have 8 or more characters.');
+  err(''); $('loginBtn').disabled = true;
+  const { data, error } = loginMode === 'signup'
+    ? await sb.auth.signUp({ email, password })
+    : await sb.auth.signInWithPassword({ email, password });
+  if ($('loginBtn')) $('loginBtn').disabled = false;
+  if (error) {
+    const m = error.message || '';
+    if (/database error/i.test(m)) return err(NOT_TEAM);  // blocked by only_team_signups in setup.sql
+    if (/already registered|already exists/i.test(m)) return err('You already set a password. Tap "Sign in" instead.');
+    if (/invalid login/i.test(m)) return err('Wrong email or password. First time here? Tap "Set your password".');
+    if (/not confirmed/i.test(m)) return err('This account is waiting for email confirmation. Ask an admin to turn off "Confirm email" in Supabase.');
+    return err(errText(error));
+  }
+  if (!data.session) return err('This account is waiting for email confirmation. Ask an admin to turn off "Confirm email" in Supabase.');
+  loginMode = 'signin';
+  await enter(email);
+}
+async function signOut(msg) {
+  try { await sb.auth.signOut(); } catch (e) {}
+  db = emptyDb(); flow = null;
+  await go('login');
+  if (typeof msg === 'string') $('loginErr').textContent = msg;
+}
 function startFlow(dir) { flow = { dir, type: null, eventId: null, donor: '', lines: [], current: null }; go('type'); }
 function pickType(t) { flow.type = t; flow.eventId = null; go(t === 'event' ? 'event' : t === 'donor' ? 'donor' : 'scan'); }
 function pickEvent(id) { flow.eventId = id; go('scan'); }
@@ -562,19 +644,19 @@ function submitDonor() {
   if (!n) { $('donorErr').textContent = 'Enter the donor\'s name.'; return; }
   flow.donor = n; go('scan');
 }
-function submitRequest() {
+async function submitRequest() {
   const name = $('rqName').value.trim();
   if (!name) { $('rqErr').textContent = 'Enter the event name.'; return; }
-  db.requests.push({ id: nextId('r'), name, date: $('rqDate').value, by: db.session, at: new Date().toISOString() });
-  save(); toast('Request sent. You can pick the event once an admin adds it.'); go('event');
+  if (await change(sb.from('event_requests').insert({ name, event_date: $('rqDate').value || null }).select(), 'Request sent. You can pick the event once an admin adds it.')) go('event');
 }
 async function cancelFlow() {
   if (flow.lines.length && !(await ask('Cancel and discard the items you scanned?', 'Discard'))) return;
   flow = null; go('home');
 }
-function findItem(code) {
+// includeDeleted: codes of deleted items are never handed out again, so old labels can't point at a new item.
+function findItem(code, includeDeleted) {
   const c = String(code).trim().toLowerCase();
-  return db.items.find((i) => i.code.toLowerCase() === c);
+  return db.items.find((i) => (includeDeleted || !i.deleted) && i.code.toLowerCase() === c);
 }
 async function onCode(text) {
   if (handling || !text) return;
@@ -646,60 +728,89 @@ function addLine(finish) {
   if (finish) complete(); else go('scan');
 }
 function removeLine(idx) { flow.lines.splice(idx, 1); render(); if (view === 'scan') { stopScanner().then(startScanner); } }
-function complete() {
+async function complete() {
   if (!flow.lines.length) { toast('Scan at least one item first.'); return; }
-  const sign = flow.dir === 'out' ? -1 : 1;
-  for (const l of flow.lines) item(l.itemId).qty += sign * l.qty;
-  lastTx = { id: nextId('t'), dir: flow.dir, type: flow.type, eventId: flow.eventId, donor: flow.donor || '', user: db.session, at: new Date().toISOString(), lines: flow.lines.map((l) => ({ ...l })) };
-  db.tx.push(lastTx); save(); flow = null; go('success');
+  if (busy) return;   // a double tap on Done must not record the checkout twice
+  busy = true;
+  const { data: txId, error } = await sb.rpc('record_transaction', {
+    p_dir: flow.dir, p_type: flow.type, p_event_id: flow.eventId ? Number(flow.eventId) : null, p_donor: flow.donor || '',
+    p_lines: flow.lines.map((l) => ({ item_id: Number(l.itemId), qty: l.qty, donor: l.donor })),
+  });
+  busy = false;
+  if (error) {
+    try { await loadAll(); } catch (e) {}
+    await go('scan');   // nothing was saved; the list is still there to fix
+    toast(errText(error));
+    return;
+  }
+  const local = { id: String(txId), dir: flow.dir, type: flow.type, eventId: flow.eventId, donor: flow.donor || '', user: db.session, at: new Date().toISOString(), lines: flow.lines.map((l) => ({ ...l })) };
+  try { await loadAll(); } catch (e) {}
+  lastTx = db.tx.find((t) => t.id === String(txId)) || local;
+  flow = null; go('success');
 }
-function requestClose(id) {
-  const e = ev(id); e.status = 'close_requested'; e.closeRequestedBy = db.session; save();
-  toast('Close request sent to the admin.'); render();
+async function requestClose(id) {
+  await change(sb.rpc('request_event_close', { p_event_id: Number(id) }), 'Close request sent to the admin.');
 }
 
-function addItem() {
+async function addItem() {
   const name = $('niName').value.trim(), location = $('niLoc').value.trim(), qty = parseInt($('niQty').value, 10);
   let code = $('niCode').value.trim();
   if (!name || !location || isNaN(qty) || qty < 0) { $('niErr').textContent = 'Fill in name, location and a quantity of 0 or more.'; return; }
-  if (code && findItem(code)) { $('niErr').textContent = 'Another item already uses that code.'; return; }
-  if (!code) { let n = db.items.length + 1; do { code = 'AF-' + String(n++).padStart(4, '0'); } while (findItem(code)); }
-  db.items.push({ id: nextId('i'), code, name, location, qty }); save(); toast(`Added ${name} (${code}).`); render();
+  if (code && findItem(code, true)) { $('niErr').textContent = 'Another item already uses that code.'; return; }
+  if (!code) { let n = db.items.length + 1; do { code = 'AF-' + String(n++).padStart(4, '0'); } while (findItem(code, true)); }
+  await change(sb.from('items').insert({ code, name, location, qty }).select(), `Added ${name} (${code}).`);
 }
-function editItem(id, field, value) {
+async function editItem(id, field, value) {
+  let v;
+  if (field === 'qty') { v = parseInt(value, 10); if (isNaN(v) || v < 0) { toast('Quantity must be 0 or more.'); render(); return; } }
+  else {
+    v = value.trim();
+    if (!v) { toast(field === 'name' ? 'The name can\'t be empty.' : 'The location can\'t be empty.'); render(); return; }
+  }
+  await change(sb.from('items').update({ [field]: v }).eq('id', Number(id)).select(), 'Saved.');
+}
+async function deleteItem(id) {
   const it = item(id);
-  if (field === 'qty') { const n = parseInt(value, 10); if (isNaN(n) || n < 0) { toast('Quantity must be 0 or more.'); render(); return; } it.qty = n; }
-  else it.location = value.trim();
-  save(); toast('Saved.');
+  if (!(await ask(`Delete ${it.name}? It disappears from the inventory and can't be scanned. Past check-outs still show it.`, 'Delete'))) return;
+  await change(sb.from('items').update({ deleted: true }).eq('id', Number(id)).select(), `Deleted ${it.name}.`);
 }
-function addEvent() {
+async function addEvent() {
   const name = $('neName').value.trim(); if (!name) return;
-  db.events.push({ id: nextId('e'), name, date: $('neDate').value, status: 'open', closeRequestedBy: null }); save(); toast(`Created ${name}.`); render();
+  await change(sb.from('events').insert({ name, event_date: $('neDate').value || null }).select(), `Created ${name}.`);
 }
-function approveRequest(id) {
+async function approveRequest(id) {
   const r = db.requests.find((x) => x.id === id);
-  db.events.push({ id: nextId('e'), name: r.name, date: r.date, status: 'open', closeRequestedBy: null });
-  db.requests = db.requests.filter((x) => x.id !== id); save(); toast(`Added ${r.name}.`); render();
+  if (await change(sb.from('events').insert({ name: r.name, event_date: r.date || null }).select(), `Added ${r.name}.`))
+    await change(sb.from('event_requests').delete().eq('id', Number(id)).select());
 }
-function dismissRequest(id) { db.requests = db.requests.filter((x) => x.id !== id); save(); render(); }
+async function dismissRequest(id) { await change(sb.from('event_requests').delete().eq('id', Number(id)).select()); }
 async function setEvent(id, status) {
-  const e = ev(id);
   if (status === 'closed') {
     const out = Object.values(eventOutstanding(id)).reduce((s, n) => s + Math.max(n, 0), 0);
     if (out && !(await ask(`${out} item(s) are still out for this event. Close it anyway?`, 'Close event'))) return;
   }
-  e.status = status; if (status === 'open') e.closeRequestedBy = null; save(); render();
+  const patch = status === 'open' ? { status, close_requested_by: null } : { status };
+  await change(sb.from('events').update(patch).eq('id', Number(id)).select());
 }
-function addAdmin() {
-  const email = $('naEmail').value.trim().toLowerCase();
-  if (!email || db.admins.includes(email)) return;
-  db.admins.push(email); save(); render();
+async function addMember() {
+  const email = $('nmEmail').value.trim().toLowerCase(), admin = $('nmAdmin').checked;
+  if (!validEmail(email)) { $('nmErr').textContent = 'Enter a valid email address.'; return; }
+  if (member(email)) { $('nmErr').textContent = `${email} is already on the team.`; return; }
+  await change(sb.from('members').insert({ email, is_admin: admin }).select(), `Added ${email} as ${admin ? 'an admin' : 'a member'}. They can now open the app and tap "Set your password".`);
 }
-function removeAdmin(email) { db.admins = db.admins.filter((a) => a !== email); save(); if (!isAdmin()) go('home'); else render(); }
-async function resetAll() {
-  if (!(await ask('Reset all items, events and activity to the sample data?', 'Reset'))) return;
-  const keep = { admins: db.admins, session: db.session };
-  db = Object.assign(seed(), keep); save(); toast('Sample data restored.'); render();
+async function setRole(i, role) {
+  const m = db.members[i];
+  if (role === 'member' && m.admin && adminCount() === 1) { toast('The team needs at least one admin.'); render(); return; }
+  if (role === 'member' && m.email === db.session && !(await ask('Remove your own admin access? You will no longer see the Admin area.', 'Remove my access'))) { render(); return; }
+  await change(sb.from('members').update({ is_admin: role === 'admin' }).eq('email', m.email).select(), `${m.email} is now ${role === 'admin' ? 'an admin' : 'a member'}.`);
+  if (!isAdmin()) go('home');
+}
+async function removeMember(i) {
+  const m = db.members[i];
+  if (m.admin && adminCount() === 1) { toast('The team needs at least one admin.'); return; }
+  const self = m.email === db.session;
+  if (!(await ask(self ? 'Remove yourself from the team? You will be signed out and can\'t sign back in.' : `Remove ${m.email}? They won't be able to sign in. Their past check-outs stay in the history.`, 'Remove'))) return;
+  await change(sb.from('members').delete().eq('email', m.email).select(), `Removed ${m.email}.`);
 }
 function exportCsv() {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -711,7 +822,7 @@ function exportCsv() {
   saveFile('atlas-free-inventory-activity.csv', rows.map((r) => r.map(esc).join(',')).join('\n'), 'text/csv');
 }
 function downloadLabels() {
-  const cells = db.items.map((i) => `<div class="l"><img src="${qrUrl(i.code)}" alt=""><b>${h(i.name)}</b><span>${h(i.code)}</span></div>`).join('');
+  const cells = active().map((i) => `<div class="l"><img src="${qrUrl(i.code)}" alt=""><b>${h(i.name)}</b><span>${h(i.code)}</span></div>`).join('');
   const doc = `<!doctype html><html><head><meta charset="utf-8"><title>Atlas Free QR labels</title><style>
 body{font-family:system-ui,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .l{border:1px dashed #bbb;border-radius:6px;padding:8px;text-align:center;break-inside:avoid}.l img{width:110px;height:110px;image-rendering:pixelated}
@@ -720,8 +831,7 @@ body{font-family:system-ui,sans-serif;margin:16px}.g{display:grid;grid-template-
   saveFile('atlas-free-qr-labels.html', doc, 'text/html');
 }
 
-render();
-if (view === 'scan') startScanner();
+boot();
 </script>
 </body>
 </html>
