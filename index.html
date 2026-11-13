@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas Free Inventory</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+  :root {
+    --blue: #3355F0;
+    --blue-dark: #2440D6;
+    --blue-soft: #E8ECFE;
+    --cream: #FAF7F2;
+    --card: #FFFFFF;
+    --ink: #141414;
+    --muted: #5E5A55;
+    --line: #E6E1D8;
+    --red: #C62E2E;
+    --red-soft: #FBE9E9;
+    --green: #1E7F4F;
+    --green-soft: #E3F4EA;
+    --amber: #8A5A00;
+    --amber-soft: #FDF1D8;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font: 400 16px/1.5 Figtree, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: Sora, Figtree, system-ui, sans-serif; letter-spacing: -0.01em; margin: 0; }
+  h1 { font-size: 26px; line-height: 1.2; }
+  h2 { font-size: 20px; line-height: 1.25; }
+  h3 { font-size: 16px; }
+  p { margin: 0; }
+  button, input, select { font: inherit; color: inherit; }
+
+  .topbar { background: var(--blue); color: #fff; }
+  .topbar-inner { max-width: 960px; margin: 0 auto; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 12px; }
+  .brand { font-family: Sora, sans-serif; font-weight: 700; font-size: 18px; line-height: 1.1; flex: 1; min-width: 0; }
+  .brand small { display: block; font-family: Figtree, sans-serif; font-weight: 500; font-size: 13px; opacity: .85; }
+  .who { font-size: 13px; text-align: right; opacity: .95; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46vw; }
+  .who button { background: none; border: 0; color: #fff; text-decoration: underline; padding: 0; cursor: pointer; font-size: 13px; }
+  .tabs { max-width: 960px; margin: 0 auto; padding-block: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 4px; overflow-x: auto; }
+  .tab { background: none; border: 0; color: rgba(255,255,255,.8); padding: 10px 12px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .tab.on { color: #fff; border-bottom-color: #fff; }
+  .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #fff; color: var(--blue); font-size: 12px; text-align: center; margin-left: 4px; }
+
+  main { max-width: 960px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .dialog-back { position: fixed; inset: 0; background: rgba(20,20,20,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+  .dialog { background: var(--card); border-radius: var(--radius); padding: 20px; max-width: 400px; width: 100%; }
+  .photo-btn { position: relative; overflow: hidden; }
+  .photo-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .stack > * + * { margin-top: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+  .sample { display: inline-block; font-size: 12px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 2px 10px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border-radius: 10px; border: 2px solid var(--blue); background: var(--blue); color: #fff; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .btn:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+  .btn.ghost { background: transparent; color: var(--blue); }
+  .btn.ghost:hover { background: var(--blue-soft); }
+  .btn.danger { background: transparent; color: var(--red); border-color: var(--red); }
+  .btn.sm { min-height: 40px; padding: 8px 14px; font-size: 14px; }
+  .btn.block { width: 100%; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-xl { min-height: 72px; font-size: 20px; font-family: Sora, sans-serif; border-radius: 14px; }
+  .link { background: none; border: 0; padding: 0; color: var(--blue); text-decoration: underline; cursor: pointer; font-weight: 600; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .row > .grow { flex: 1; min-width: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
+
+  label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  input[type=text], input[type=email], input[type=number], input[type=search], input[type=date], select {
+    width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid var(--line); border-radius: 10px; background: #fff;
+  }
+  input:focus, select:focus, .btn:focus-visible, .tab:focus-visible, .choice:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-color: var(--blue); }
+  .error { color: var(--red); font-size: 14px; font-weight: 600; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .choices { grid-template-columns: 1fr; } }
+  .choice { text-align: left; background: #fff; border: 2px solid var(--line); border-radius: var(--radius); padding: 18px 16px; cursor: pointer; }
+  .choice:hover { border-color: var(--blue); }
+  .choice strong { display: block; font-family: Sora, sans-serif; font-size: 17px; }
+  .choice span { color: var(--muted); font-size: 14px; }
+
+  .items { list-style: none; margin: 0; padding: 0; }
+  .items li { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .items li:first-child { border-top: 0; }
+  .items .name { font-weight: 600; }
+  .qty { font-family: Sora, sans-serif; font-weight: 700; font-size: 20px; text-align: right; min-width: 56px; }
+  .qty small { display: block; font-family: Figtree, sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 10px; }
+  .pill.out { background: var(--blue-soft); color: var(--blue-dark); }
+  .pill.in { background: var(--green-soft); color: var(--green); }
+  .pill.warn { background: var(--amber-soft); color: var(--amber); }
+  .pill.zero { background: var(--red-soft); color: var(--red); }
+  .pill.grey { background: #EEE; color: var(--muted); }
+
+  .flowchip { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; background: var(--blue-soft); color: var(--blue-dark); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 6px 14px; }
+  #reader { width: 100%; max-width: 420px; margin: 0 auto; border-radius: var(--radius); overflow: hidden; background: #000; min-height: 240px; }
+  #reader video { display: block; }
+  .stepper { display: flex; align-items: stretch; gap: 8px; max-width: 260px; }
+  .stepper button { width: 56px; min-height: 56px; border-radius: 10px; border: 2px solid var(--blue); background: #fff; color: var(--blue); font-size: 26px; font-weight: 700; cursor: pointer; }
+  .stepper input { text-align: center; font-size: 22px; font-weight: 700; min-height: 56px; }
+  .back { margin-bottom: 4px; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px; font-weight: 600; max-width: calc(100% - 32px); z-index: 10; }
+  .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .table th, .table td { text-align: left; padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  .table th { border-top: 0; color: var(--muted); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  .txlines { margin: 6px 0 0; padding-left: 18px; }
+
+  .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .label { background: #fff; border: 1px dashed var(--line); border-radius: 8px; padding: 10px; text-align: center; break-inside: avoid; }
+  .label img { width: 120px; height: 120px; image-rendering: pixelated; }
+  .label .lname { font-weight: 700; font-size: 14px; }
+  .label .lcode { font-size: 12px; color: var(--muted); }
+  @media print {
+    .topbar, .noprint, .toast { display: none !important; }
+    body { background: #fff; }
+    main { padding: 0; }
+    .label { border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="fileReader" hidden></div>
+<script>
+// Atlas Free Inventory: clickable prototype. Data is saved only in this browser (localStorage).
+const KEY = 'atlasfree-inventory-v1';
+const TYPES = {
+  general: { label: 'General checkout', hint: 'Everyday use, office or outreach' },
+  event:   { label: 'Specific event', hint: 'Items for an event campaign' },
+  donor:   { label: 'Donor gift', hint: 'A gift for a named donor' },
+  merch:   { label: 'Merch', hint: 'Shirts, totes and other merch' },
+};
+
+function seed() {
+  const items = [
+    ['AF-0001', 'Atlas Free T-shirt (M)', 'Storage closet, shelf A', 42],
+    ['AF-0002', 'Atlas Free T-shirt (L)', 'Storage closet, shelf A', 35],
+    ['AF-0003', 'Tote bag', 'Storage closet, shelf B', 60],
+    ['AF-0004', 'Water bottle', 'Storage closet, shelf B', 24],
+    ['AF-0005', 'Sticker pack', 'Front desk drawer', 150],
+    ['AF-0006', 'Brochure (box of 100)', 'Office, cabinet 2', 8],
+    ['AF-0007', 'Table cloth (blue)', 'Event bin 1', 3],
+    ['AF-0008', 'Pull-up banner', 'Event bin 1', 2],
+    ['AF-0009', 'Donor thank-you mug', 'Office, cabinet 1', 18],
+    ['AF-0010', 'Framed print', 'Office, cabinet 1', 0],
+  ].map(([code, name, location, qty], i) => ({ id: 'i' + (i + 1), code, name, location, qty }));
+  return {
+    items,
+    events: [{ id: 'e1', name: 'Sample: Community 5K', date: '', status: 'open', closeRequestedBy: null }],
+    requests: [],
+    tx: [],
+    admins: [],
+    session: null,
+    seq: 100,
+  };
+}
+function load() {
+  try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (e) {}
+  return seed();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
+function nextId(p) { db.seq += 1; return p + db.seq; }
+
+let db = load();
+let view = db.session ? 'home' : 'login';
+let adminTab = 'activity';
+let flow = null;      // { dir: 'out'|'in', type, eventId, donor, lines: [{itemId, qty, donor}], current }
+let lastTx = null;
+let search = '';
+let actFilter = { dir: '', type: '', q: '' };
+let scanner = null;
+let handling = false;
+
+const $ = (id) => document.getElementById(id);
+const h = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const item = (id) => db.items.find((i) => i.id === id);
+const ev = (id) => db.events.find((e) => e.id === id);
+const isAdmin = () => !!db.session && db.admins.includes(db.session);
+const fmtDate = (iso) => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+// In-page yes/no box (the claude.ai viewer blocks the browser's confirm()).
+function ask(msg, okLabel) {
+  return new Promise((resolve) => {
+    const back = document.createElement('div'); back.className = 'dialog-back';
+    back.innerHTML = `<div class="dialog stack" role="dialog" aria-modal="true"><p>${h(msg)}</p>
+      <div class="two"><button class="btn ghost" data-v="0">Keep going</button><button class="btn" data-v="1">${h(okLabel)}</button></div></div>`;
+    back.addEventListener('click', (e) => {
+      const v = e.target.closest('[data-v]'); if (!v && e.target !== back) return;
+      back.remove(); resolve(!!v && v.dataset.v === '1');
+    });
+    document.body.appendChild(back); back.querySelector('[data-v="1"]').focus();
+  });
+}
+// Saves a file: through the viewer's downloads on claude.ai, or a plain download when opened as a file.
+async function saveFile(filename, data, type) {
+  let dl = null;
+  try { dl = window.claude?.use ? await window.claude.use('downloads') : null; } catch (e) {}
+  if (dl) {
+    try { await dl.save({ filename, data }); } catch (e) { if (e?.code !== 'declined') toast('Could not save the file here.'); }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type })); a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function toast(msg) {
+  const old = document.querySelector('.toast'); if (old) old.remove();
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2800);
+}
+
+async function stopScanner() {
+  if (!scanner) return;
+  try { if (scanner.isScanning) await scanner.stop(); scanner.clear(); } catch (e) {}
+  scanner = null;
+}
+async function go(v) {
+  await stopScanner();
+  view = v; render(); window.scrollTo(0, 0);
+  if (v === 'scan') startScanner();
+}
+
+function eventOutstanding(eventId) {
+  const m = {};
+  for (const t of db.tx) if (t.type === 'event' && t.eventId === eventId)
+    for (const l of t.lines) m[l.itemId] = (m[l.itemId] || 0) + (t.dir === 'out' ? l.qty : -l.qty);
+  return m;
+}
+function eventAllBack(eventId) {
+  const hadOut = db.tx.some((t) => t.type === 'event' && t.eventId === eventId && t.dir === 'out');
+  return hadOut && Object.values(eventOutstanding(eventId)).every((n) => n <= 0);
+}
+
+// ---------- rendering ----------
+function render() {
+  const app = $('app');
+  if (view === 'login') { app.innerHTML = vLogin(); return; }
+  const pending = db.requests.length + db.events.filter((e) => e.status === 'close_requested').length;
+  const tab = view === 'admin' ? 'admin' : 'home';
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">Atlas Free<small>Inventory</small></div>
+        <div class="who">${h(db.session)}${isAdmin() ? ' · Admin' : ''}<br><button onclick="signOut()">Sign out</button></div>
+      </div>
+      <nav class="tabs" aria-label="Main">
+        <button class="tab ${tab === 'home' ? 'on' : ''}" onclick="flow=null;go('home')">Inventory</button>
+        ${isAdmin() ? `<button class="tab ${tab === 'admin' ? 'on' : ''}" onclick="go('admin')">Admin${pending ? `<span class="badge">${pending}</span>` : ''}</button>` : ''}
+      </nav>
+    </header>
+    <main>${({ home: vHome, type: vType, event: vEvent, request: vRequest, donor: vDonor, scan: vScan, item: vItem, success: vSuccess, admin: vAdmin, labels: vLabels })[view]()}</main>`;
+}
+
+function vLogin() {
+  return `
+  <header class="topbar"><div class="topbar-inner"><div class="brand">Atlas Free<small>Inventory</small></div></div></header>
+  <main><div class="card stack" style="max-width:440px;margin:24px auto">
+    <h1>Sign in</h1>
+    <p class="muted">Use your work email. Every check-out and check-in records who did it.</p>
+    <form onsubmit="event.preventDefault();signIn()" class="stack">
+      <div><label for="email">Email</label><input id="email" type="email" autocomplete="email" required placeholder="you@example.org"></div>
+      <div id="loginErr" class="error" role="alert"></div>
+      <button class="btn block" type="submit">Continue</button>
+    </form>
+    <p class="small muted">Prototype: no password yet. The first email to sign in on this device becomes the admin. The real version sends a sign-in link to your email.</p>
+  </div></main>`;
+}
+
+function vHome() {
+  const q = search.trim().toLowerCase();
+  const list = db.items.filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q));
+  return `<div class="stack">
+    <div class="two">
+      <button class="btn btn-xl block" onclick="startFlow('out')">Check out</button>
+      <button class="btn btn-xl ghost block" onclick="startFlow('in')">Check in</button>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-bottom:8px"><h2 class="grow">Inventory</h2><span class="sample">Sample data</span></div>
+      <input type="search" id="search" placeholder="Search items or locations" value="${h(search)}" oninput="search=this.value;renderList()" aria-label="Search inventory">
+      <ul class="items" id="itemList" style="margin-top:8px">${itemRows(list)}</ul>
+    </div>
+  </div>`;
+}
+function itemRows(list) {
+  if (!list.length) return `<li class="muted">No items match.</li>`;
+  return list.map((i) => `<li>
+    <div class="grow"><div class="name">${h(i.name)}</div><div class="small muted">${h(i.location)} · ${h(i.code)}</div></div>
+    <div class="qty">${i.qty}<small>${i.qty === 0 ? '<span class="pill zero">Out</span>' : i.qty <= 3 ? '<span class="pill warn">Low</span>' : 'in stock'}</small></div>
+  </li>`).join('');
+}
+function renderList() {
+  const q = search.trim().toLowerCase();
+  $('itemList').innerHTML = itemRows(db.items.filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q)));
+}
+
+function verb() { return flow.dir === 'out' ? 'checking out' : 'checking in'; }
+function backBtn(to) { return `<button class="link back" onclick="go('${to}')">← Back</button>`; }
+
+function vType() {
+  return `<div class="stack">
+    ${backBtn('home')}
+    <h1>What are you ${verb()}?</h1>
+    <div class="choices">${Object.entries(TYPES).map(([k, t]) => `
+      <button class="choice" onclick="pickType('${k}')"><strong>${t.label}</strong><span>${t.hint}</span></button>`).join('')}
+    </div></div>`;
+}
+
+function vEvent() {
+  const open = db.events.filter((e) => e.status !== 'closed');
+  return `<div class="stack">
+    ${backBtn('type')}
+    <h1>Which event?</h1>
+    ${open.length ? `<div class="choices">${open.map((e) => `
+      <button class="choice" onclick="pickEvent('${e.id}')"><strong>${h(e.name)}</strong><span>${e.date ? h(e.date) + ' · ' : ''}${e.status === 'close_requested' ? 'Close requested' : 'Open'}</span></button>`).join('')}</div>`
+      : `<div class="card muted">No open events yet.</div>`}
+    <div class="card"><p><strong>Don't see your event?</strong> Only an admin can add events.</p>
+      <button class="btn ghost sm" style="margin-top:10px" onclick="go('request')">Ask an admin to add it</button></div>
+  </div>`;
+}
+
+function vRequest() {
+  return `<div class="stack">
+    ${backBtn('event')}
+    <h1>Request a new event</h1>
+    <form class="card stack" onsubmit="event.preventDefault();submitRequest()">
+      <div><label for="rqName">Event name</label><input id="rqName" type="text" required placeholder="e.g. Spring Gala"></div>
+      <div><label for="rqDate">Event date (optional)</label><input id="rqDate" type="date"></div>
+      <div id="rqErr" class="error" role="alert"></div>
+      <button class="btn block" type="submit">Send request to admin</button>
+    </form></div>`;
+}
+
+function vDonor() {
+  return `<div class="stack">
+    ${backBtn('type')}
+    <h1>Who is the gift for?</h1>
+    <form class="card stack" onsubmit="event.preventDefault();submitDonor()">
+      <div><label for="donorName">Donor name</label><input id="donorName" type="text" required value="${h(flow.donor || '')}" placeholder="Full name"></div>
+      <div id="donorErr" class="error" role="alert"></div>
+      <button class="btn block" type="submit">Next: scan items</button>
+    </form></div>`;
+}
+
+function flowChip() {
+  const parts = [flow.dir === 'out' ? 'Checking out' : 'Checking in', TYPES[flow.type].label];
+  if (flow.type === 'event') parts.push(ev(flow.eventId)?.name || '');
+  if (flow.type === 'donor') parts.push('for ' + flow.donor);
+  return `<div class="flowchip">${parts.map(h).join(' · ')}</div>`;
+}
+function linesList() {
+  if (!flow.lines.length) return '';
+  return `<div class="card"><h3>In this ${flow.dir === 'out' ? 'checkout' : 'check-in'} (${flow.lines.length})</h3>
+    <ul class="items">${flow.lines.map((l, idx) => `<li>
+      <div class="grow"><div class="name">${h(item(l.itemId).name)}</div>${l.donor ? `<div class="small muted">For ${h(l.donor)}</div>` : ''}</div>
+      <div class="qty">${l.qty}</div>
+      <button class="link" onclick="removeLine(${idx})" aria-label="Remove ${h(item(l.itemId).name)}">Remove</button></li>`).join('')}</ul>
+    <button class="btn block" style="margin-top:12px" onclick="complete()">Done</button></div>`;
+}
+
+function vScan() {
+  return `<div class="stack">
+    <div class="row"><div class="grow">${flowChip()}</div><button class="link" onclick="cancelFlow()">Cancel</button></div>
+    <h1>Scan an item</h1>
+    <div id="reader"></div>
+    <p id="camMsg" class="small muted" style="text-align:center">Point the camera at the item's QR code or barcode. It scans by itself.</p>
+    <label class="btn ghost block photo-btn" for="photoInput">Camera not working? Take a photo instead
+      <input id="photoInput" type="file" accept="image/*" capture="environment" onchange="scanPhoto(this)"></label>
+    <form class="card stack" onsubmit="event.preventDefault();onCode($('manualCode').value)">
+      <div><label for="manualCode">Or type the code on the label</label>
+        <div class="row"><input class="grow" id="manualCode" type="text" placeholder="e.g. AF-0003" autocapitalize="characters" style="flex:1"><button class="btn sm" type="submit">Find</button></div></div>
+      <div><label for="pickItem">Or pick from the list (prototype helper)</label>
+        <select id="pickItem" onchange="if(this.value)onCode(this.value)"><option value="">Choose an item…</option>${db.items.map((i) => `<option value="${h(i.code)}">${h(i.name)} (${i.qty} in stock)</option>`).join('')}</select></div>
+    </form>
+    ${linesList()}
+  </div>`;
+}
+
+function vItem() {
+  const c = flow.current, it = item(c.itemId);
+  let note = `${it.qty} in stock · ${h(it.location)}`;
+  if (flow.dir === 'out') {
+    const inCart = flow.lines.filter((l) => l.itemId === it.id).reduce((s, l) => s + l.qty, 0);
+    if (inCart) note += ` · ${inCart} already in this checkout`;
+  } else if (flow.type === 'event') {
+    const o = eventOutstanding(flow.eventId)[it.id] || 0;
+    note += ` · ${Math.max(o, 0)} still out for this event`;
+  }
+  return `<div class="stack">
+    <div class="row"><div class="grow">${flowChip()}</div><button class="link" onclick="go('scan')">Cancel item</button></div>
+    <div class="card stack">
+      <div><span class="small muted">${h(it.code)}</span><h1>${h(it.name)}</h1><p class="muted small">${note}</p></div>
+      <div><label for="qtyInput">Quantity ${flow.dir === 'out' ? 'checking out' : 'checking in'}</label>
+        <div class="stepper">
+          <button type="button" onclick="bump(-1)" aria-label="One less">−</button>
+          <input id="qtyInput" type="number" inputmode="numeric" min="1" value="${c.qty}">
+          <button type="button" onclick="bump(1)" aria-label="One more">+</button>
+        </div></div>
+      ${flow.type === 'donor' ? `<div><label for="lineDonor">Donor this item is for</label><input id="lineDonor" type="text" value="${h(c.donor)}"></div>` : ''}
+      <div id="itemErr" class="error" role="alert"></div>
+      <div class="two">
+        <button class="btn ghost block" onclick="addLine(false)">Scan another</button>
+        <button class="btn block" onclick="addLine(true)">Done</button>
+      </div>
+    </div>
+    ${linesList()}
+  </div>`;
+}
+
+function vSuccess() {
+  const t = lastTx;
+  let eventBox = '';
+  if (t.type === 'event' && t.dir === 'in') {
+    const e = ev(t.eventId);
+    if (e.status === 'close_requested') eventBox = `<div class="card"><span class="pill warn">Close requested</span> <span class="small muted">An admin will close ${h(e.name)}.</span></div>`;
+    else if (e.status === 'open' && eventAllBack(t.eventId)) eventBox = `<div class="card stack"><p><strong>Every item for ${h(e.name)} is back.</strong></p>
+      <button class="btn block" onclick="requestClose('${e.id}')">Request event to be closed</button></div>`;
+    else {
+      const out = Object.entries(eventOutstanding(t.eventId)).filter(([, n]) => n > 0);
+      eventBox = `<div class="card"><h3>Still out for ${h(e.name)}</h3><ul class="txlines">${out.map(([id, n]) => `<li>${n} × ${h(item(id).name)}</li>`).join('')}</ul></div>`;
+    }
+  }
+  return `<div class="stack">
+    <div class="card stack">
+      <span class="pill ${t.dir}">${t.dir === 'out' ? 'Checked out' : 'Checked in'}</span>
+      <h1>All set</h1>
+      <p class="muted">${h(TYPES[t.type].label)}${t.eventId ? ' · ' + h(ev(t.eventId).name) : ''}${t.donor ? ' · for ' + h(t.donor) : ''} · ${fmtDate(t.at)}</p>
+      <ul class="txlines">${t.lines.map((l) => `<li>${l.qty} × ${h(item(l.itemId).name)}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
+    </div>
+    ${eventBox}
+    <button class="btn ghost block" onclick="flow=null;go('home')">Back to inventory</button>
+  </div>`;
+}
+
+// ---------- admin ----------
+function vAdmin() {
+  const tabs = { activity: 'Activity', items: 'Items', events: 'Events', people: 'People' };
+  return `<div class="stack">
+    <div class="row noprint">${Object.entries(tabs).map(([k, l]) => `<button class="btn sm ${adminTab === k ? '' : 'ghost'}" onclick="adminTab='${k}';render()">${l}</button>`).join('')}</div>
+    ${({ activity: aActivity, items: aItems, events: aEvents, people: aPeople })[adminTab]()}
+  </div>`;
+}
+function filteredTx() {
+  const q = actFilter.q.trim().toLowerCase();
+  return db.tx.filter((t) => (!actFilter.dir || t.dir === actFilter.dir) && (!actFilter.type || t.type === actFilter.type) &&
+    (!q || [t.user, t.donor, t.eventId && ev(t.eventId)?.name, ...t.lines.map((l) => item(l.itemId)?.name + ' ' + (l.donor || ''))].join(' ').toLowerCase().includes(q))).slice().reverse();
+}
+function aActivity() {
+  const list = filteredTx();
+  const outs = db.tx.filter((t) => t.dir === 'out').length, ins = db.tx.length - outs;
+  return `<div class="card stack">
+    <div class="row"><h2 class="grow">All check-outs and check-ins</h2><button class="btn ghost sm" onclick="exportCsv()" ${db.tx.length ? '' : 'disabled'}>Download CSV</button></div>
+    <p class="small muted">${outs} check-outs · ${ins} check-ins</p>
+    <div class="two">
+      <select aria-label="Direction" onchange="actFilter.dir=this.value;render()"><option value="">Out and in</option><option value="out" ${actFilter.dir === 'out' ? 'selected' : ''}>Check-outs</option><option value="in" ${actFilter.dir === 'in' ? 'selected' : ''}>Check-ins</option></select>
+      <select aria-label="Type" onchange="actFilter.type=this.value;render()"><option value="">All types</option>${Object.entries(TYPES).map(([k, t]) => `<option value="${k}" ${actFilter.type === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select>
+    </div>
+    <input type="search" placeholder="Search person, donor, event or item" value="${h(actFilter.q)}" onchange="actFilter.q=this.value;render()" aria-label="Search activity">
+    ${list.length ? `<ul class="items">${list.map((t) => `<li style="align-items:flex-start">
+      <div class="grow">
+        <div class="row" style="gap:8px"><span class="pill ${t.dir}">${t.dir === 'out' ? 'Out' : 'In'}</span><strong>${h(TYPES[t.type].label)}</strong>${t.eventId ? `<span class="small">${h(ev(t.eventId)?.name)}</span>` : ''}${t.donor ? `<span class="small">for ${h(t.donor)}</span>` : ''}</div>
+        <div class="small muted">${h(t.user)} · ${fmtDate(t.at)}</div>
+        <ul class="txlines small">${t.lines.map((l) => `<li>${l.qty} × ${h(item(l.itemId)?.name)}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
+      </div></li>`).join('')}</ul>` : `<p class="muted">${db.tx.length ? 'Nothing matches these filters.' : 'No activity yet. Check-outs and check-ins will show here.'}</p>`}
+  </div>`;
+}
+function aItems() {
+  return `<div class="stack">
+    <form class="card stack noprint" onsubmit="event.preventDefault();addItem()">
+      <h2>Add an item</h2>
+      <div class="two">
+        <div><label for="niName">Name</label><input id="niName" type="text" required></div>
+        <div><label for="niLoc">Location</label><input id="niLoc" type="text" required placeholder="e.g. Storage closet, shelf A"></div>
+        <div><label for="niQty">Quantity</label><input id="niQty" type="number" min="0" value="0" required></div>
+        <div><label for="niCode">Existing barcode (optional)</label><input id="niCode" type="text" placeholder="Leave empty to make a QR code"></div>
+      </div>
+      <div id="niErr" class="error" role="alert"></div>
+      <button class="btn" type="submit">Add item</button>
+    </form>
+    <div class="card stack">
+      <div class="row"><h2 class="grow">Items</h2><button class="btn ghost sm" onclick="go('labels')">Print QR labels</button></div>
+      <div class="scroll"><table class="table"><thead><tr><th>Item</th><th>Location</th><th>Qty</th></tr></thead><tbody>
+      ${db.items.map((i) => `<tr><td><strong>${h(i.name)}</strong><br><span class="muted">${h(i.code)}</span></td>
+        <td><input type="text" aria-label="Location of ${h(i.name)}" value="${h(i.location)}" onchange="editItem('${i.id}','location',this.value)" style="min-width:160px"></td>
+        <td><input type="number" min="0" aria-label="Quantity of ${h(i.name)}" value="${i.qty}" onchange="editItem('${i.id}','qty',this.value)" style="width:90px"></td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="small muted">Changing a quantity here is a stock count correction; it is not logged as a check-out.</p>
+    </div></div>`;
+}
+function aEvents() {
+  const statusPill = (e) => e.status === 'open' ? '<span class="pill in">Open</span>' : e.status === 'closed' ? '<span class="pill grey">Closed</span>' : '<span class="pill warn">Close requested</span>';
+  return `<div class="stack">
+    ${db.requests.length ? `<div class="card stack"><h2>Event requests</h2><ul class="items">${db.requests.map((r) => `<li>
+      <div class="grow"><div class="name">${h(r.name)}</div><div class="small muted">${r.date ? h(r.date) + ' · ' : ''}asked by ${h(r.by)}</div></div>
+      <button class="btn sm" onclick="approveRequest('${r.id}')">Add event</button><button class="link" onclick="dismissRequest('${r.id}')">Dismiss</button></li>`).join('')}</ul></div>` : ''}
+    <form class="card stack" onsubmit="event.preventDefault();addEvent()">
+      <h2>Create an event campaign</h2>
+      <div class="two"><div><label for="neName">Event name</label><input id="neName" type="text" required></div>
+        <div><label for="neDate">Date (optional)</label><input id="neDate" type="date"></div></div>
+      <button class="btn" type="submit">Create event</button>
+    </form>
+    <div class="card"><h2>Events</h2><ul class="items">${db.events.slice().reverse().map((e) => {
+      const out = Object.values(eventOutstanding(e.id)).reduce((s, n) => s + Math.max(n, 0), 0);
+      return `<li><div class="grow"><div class="name">${h(e.name)}</div>
+        <div class="small muted">${statusPill(e)} ${out} item${out === 1 ? '' : 's'} still out${e.closeRequestedBy ? ' · close asked by ' + h(e.closeRequestedBy) : ''}</div></div>
+        ${e.status === 'closed' ? `<button class="link" onclick="setEvent('${e.id}','open')">Reopen</button>` : `<button class="btn sm ${e.status === 'close_requested' ? '' : 'ghost'}" onclick="setEvent('${e.id}','closed')">Close</button>`}</li>`;
+    }).join('')}</ul></div></div>`;
+}
+function aPeople() {
+  return `<div class="stack"><div class="card stack">
+    <h2>Admins</h2>
+    <p class="small muted">Admins see this tab: all activity, items, events and requests. Everyone else can check items in and out.</p>
+    <ul class="items">${db.admins.map((a) => `<li><div class="grow">${h(a)}${a === db.session ? ' <span class="small muted">(you)</span>' : ''}</div>
+      ${db.admins.length > 1 ? `<button class="link" onclick="removeAdmin('${h(a)}')">Remove</button>` : ''}</li>`).join('')}</ul>
+    <form class="row" onsubmit="event.preventDefault();addAdmin()"><input class="grow" id="naEmail" type="email" required placeholder="email@example.org" aria-label="New admin email" style="flex:1"><button class="btn sm" type="submit">Make admin</button></form>
+  </div>
+  <div class="card stack"><h2>Prototype data</h2><p class="small muted">Everything is saved only in this browser. Reset puts the sample items back and clears all activity.</p>
+    <button class="btn danger sm" onclick="resetAll()">Reset sample data</button></div></div>`;
+}
+function vLabels() {
+  return `<div class="stack">
+    <div class="row noprint"><button class="link" onclick="adminTab='items';go('admin')">← Back</button><span class="grow"></span><button class="btn sm" onclick="downloadLabels()">Download label sheet</button></div>
+    <p class="small muted noprint">Download the sheet, open it on a computer, print it on sticker paper, then put each label on its item or shelf.</p>
+    <div class="labels">${db.items.map((i) => `<div class="label"><img alt="QR code for ${h(i.code)}" src="${qrUrl(i.code)}"><div class="lname">${h(i.name)}</div><div class="lcode">${h(i.code)}</div></div>`).join('')}</div>
+  </div>`;
+}
+function qrUrl(text) {
+  if (!window.qrcode) return '';
+  const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createDataURL(6, 2);
+}
+
+// ---------- actions ----------
+function signIn() {
+  const email = $('email').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $('loginErr').textContent = 'Enter a valid email address.'; return; }
+  if (!db.admins.length) db.admins.push(email);
+  db.session = email; save(); go('home');
+}
+function signOut() { db.session = null; flow = null; save(); go('login'); }
+function startFlow(dir) { flow = { dir, type: null, eventId: null, donor: '', lines: [], current: null }; go('type'); }
+function pickType(t) { flow.type = t; flow.eventId = null; go(t === 'event' ? 'event' : t === 'donor' ? 'donor' : 'scan'); }
+function pickEvent(id) { flow.eventId = id; go('scan'); }
+function submitDonor() {
+  const n = $('donorName').value.trim();
+  if (!n) { $('donorErr').textContent = 'Enter the donor\'s name.'; return; }
+  flow.donor = n; go('scan');
+}
+function submitRequest() {
+  const name = $('rqName').value.trim();
+  if (!name) { $('rqErr').textContent = 'Enter the event name.'; return; }
+  db.requests.push({ id: nextId('r'), name, date: $('rqDate').value, by: db.session, at: new Date().toISOString() });
+  save(); toast('Request sent. You can pick the event once an admin adds it.'); go('event');
+}
+async function cancelFlow() {
+  if (flow.lines.length && !(await ask('Cancel and discard the items you scanned?', 'Discard'))) return;
+  flow = null; go('home');
+}
+function findItem(code) {
+  const c = String(code).trim().toLowerCase();
+  return db.items.find((i) => i.code.toLowerCase() === c);
+}
+async function onCode(text) {
+  if (handling || !text) return;
+  handling = true;
+  const it = findItem(text);
+  if (!it) { toast(`No item has the code "${text}".`); setTimeout(() => { handling = false; }, 1500); return; }
+  if ('vibrate' in navigator) navigator.vibrate(60);
+  flow.current = { itemId: it.id, qty: 1, donor: flow.donor || '' };
+  await go('item');
+  handling = false;
+}
+function startScanner() {
+  if (!window.Html5Qrcode) { $('camMsg').textContent = 'The scanner did not load (no internet?). Type the code instead.'; return; }
+  scanner = new Html5Qrcode('reader', { verbose: false });
+  scanner.start({ facingMode: 'environment' },
+    { fps: 10, qrbox: (w, hgt) => { const s = Math.floor(Math.min(w, hgt) * 0.7); return { width: s, height: s }; } },
+    (text) => onCode(text), () => {})
+    .catch(() => {
+      scanner = null;
+      if (!$('camMsg')) return; // already left the scan screen
+      $('camMsg').textContent = 'The camera is blocked. Allow camera access for this site in your browser settings, or take a photo instead.'; $('reader').hidden = true;
+    });
+}
+async function scanPhoto(input) {
+  const file = input.files && input.files[0]; input.value = '';
+  if (!file) return;
+  if (!window.Html5Qrcode) { toast('The scanner did not load. Type the code instead.'); return; }
+  const text = await decodePhoto(file);
+  if (text) onCode(text); else toast('No code found in that photo. Fill the frame with the label and try again.');
+}
+// Phone photos are 12+ megapixels and the decoder gives up on them, so try smaller copies and a centre crop.
+async function decodePhoto(file) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = url; });
+  URL.revokeObjectURL(url);
+  if (!img) return null;
+  const W = img.naturalWidth, H = img.naturalHeight;
+  const tries = [[0, 0, W, H, 1200], [W * .2, H * .2, W * .6, H * .6, 1000], [0, 0, W, H, 800], [0, 0, W, H, 1800]];
+  const reader = new Html5Qrcode('fileReader', { verbose: false });
+  try {
+    for (const [sx, sy, sw, sh, max] of tries) {
+      const k = Math.min(1, max / Math.max(sw, sh));
+      const c = document.createElement('canvas'); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+      c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      if ('BarcodeDetector' in window) {
+        try { const r = await new BarcodeDetector().detect(c); if (r[0]) return r[0].rawValue; } catch (e) {}
+      }
+      const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
+      try { return await reader.scanFile(new File([blob], 'scan.png', { type: 'image/png' }), false); } catch (e) {}
+    }
+    return null;
+  } finally { try { reader.clear(); } catch (e) {} }
+}
+function bump(d) { const i = $('qtyInput'); i.value = Math.max(1, (parseInt(i.value, 10) || 0) + d); }
+function addLine(finish) {
+  const qty = parseInt($('qtyInput').value, 10);
+  const c = flow.current, it = item(c.itemId);
+  const err = (m) => { $('itemErr').textContent = m; };
+  if (!qty || qty < 1) return err('Enter a quantity of 1 or more.');
+  const donor = flow.type === 'donor' ? $('lineDonor').value.trim() : '';
+  if (flow.type === 'donor' && !donor) return err('Enter the donor this item is for.');
+  if (flow.dir === 'out') {
+    const inCart = flow.lines.filter((l) => l.itemId === it.id).reduce((s, l) => s + l.qty, 0);
+    if (qty + inCart > it.qty) return err(`Only ${it.qty - inCart} left in stock.`);
+  }
+  const same = flow.lines.find((l) => l.itemId === it.id && l.donor === donor);
+  if (same) same.qty += qty; else flow.lines.push({ itemId: it.id, qty, donor });
+  flow.current = null;
+  if (finish) complete(); else go('scan');
+}
+function removeLine(idx) { flow.lines.splice(idx, 1); render(); if (view === 'scan') { stopScanner().then(startScanner); } }
+function complete() {
+  if (!flow.lines.length) { toast('Scan at least one item first.'); return; }
+  const sign = flow.dir === 'out' ? -1 : 1;
+  for (const l of flow.lines) item(l.itemId).qty += sign * l.qty;
+  lastTx = { id: nextId('t'), dir: flow.dir, type: flow.type, eventId: flow.eventId, donor: flow.donor || '', user: db.session, at: new Date().toISOString(), lines: flow.lines.map((l) => ({ ...l })) };
+  db.tx.push(lastTx); save(); flow = null; go('success');
+}
+function requestClose(id) {
+  const e = ev(id); e.status = 'close_requested'; e.closeRequestedBy = db.session; save();
+  toast('Close request sent to the admin.'); render();
+}
+
+function addItem() {
+  const name = $('niName').value.trim(), location = $('niLoc').value.trim(), qty = parseInt($('niQty').value, 10);
+  let code = $('niCode').value.trim();
+  if (!name || !location || isNaN(qty) || qty < 0) { $('niErr').textContent = 'Fill in name, location and a quantity of 0 or more.'; return; }
+  if (code && findItem(code)) { $('niErr').textContent = 'Another item already uses that code.'; return; }
+  if (!code) { let n = db.items.length + 1; do { code = 'AF-' + String(n++).padStart(4, '0'); } while (findItem(code)); }
+  db.items.push({ id: nextId('i'), code, name, location, qty }); save(); toast(`Added ${name} (${code}).`); render();
+}
+function editItem(id, field, value) {
+  const it = item(id);
+  if (field === 'qty') { const n = parseInt(value, 10); if (isNaN(n) || n < 0) { toast('Quantity must be 0 or more.'); render(); return; } it.qty = n; }
+  else it.location = value.trim();
+  save(); toast('Saved.');
+}
+function addEvent() {
+  const name = $('neName').value.trim(); if (!name) return;
+  db.events.push({ id: nextId('e'), name, date: $('neDate').value, status: 'open', closeRequestedBy: null }); save(); toast(`Created ${name}.`); render();
+}
+function approveRequest(id) {
+  const r = db.requests.find((x) => x.id === id);
+  db.events.push({ id: nextId('e'), name: r.name, date: r.date, status: 'open', closeRequestedBy: null });
+  db.requests = db.requests.filter((x) => x.id !== id); save(); toast(`Added ${r.name}.`); render();
+}
+function dismissRequest(id) { db.requests = db.requests.filter((x) => x.id !== id); save(); render(); }
+async function setEvent(id, status) {
+  const e = ev(id);
+  if (status === 'closed') {
+    const out = Object.values(eventOutstanding(id)).reduce((s, n) => s + Math.max(n, 0), 0);
+    if (out && !(await ask(`${out} item(s) are still out for this event. Close it anyway?`, 'Close event'))) return;
+  }
+  e.status = status; if (status === 'open') e.closeRequestedBy = null; save(); render();
+}
+function addAdmin() {
+  const email = $('naEmail').value.trim().toLowerCase();
+  if (!email || db.admins.includes(email)) return;
+  db.admins.push(email); save(); render();
+}
+function removeAdmin(email) { db.admins = db.admins.filter((a) => a !== email); save(); if (!isAdmin()) go('home'); else render(); }
+async function resetAll() {
+  if (!(await ask('Reset all items, events and activity to the sample data?', 'Reset'))) return;
+  const keep = { admins: db.admins, session: db.session };
+  db = Object.assign(seed(), keep); save(); toast('Sample data restored.'); render();
+}
+function exportCsv() {
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = [['Date', 'Person', 'Direction', 'Type', 'Event', 'Donor', 'Item', 'Code', 'Quantity']];
+  for (const t of db.tx) for (const l of t.lines) {
+    const it = item(l.itemId);
+    rows.push([t.at, t.user, t.dir === 'out' ? 'Check-out' : 'Check-in', TYPES[t.type].label, t.eventId ? ev(t.eventId)?.name : '', l.donor || t.donor, it?.name, it?.code, l.qty]);
+  }
+  saveFile('atlas-free-inventory-activity.csv', rows.map((r) => r.map(esc).join(',')).join('\n'), 'text/csv');
+}
+function downloadLabels() {
+  const cells = db.items.map((i) => `<div class="l"><img src="${qrUrl(i.code)}" alt=""><b>${h(i.name)}</b><span>${h(i.code)}</span></div>`).join('');
+  const doc = `<!doctype html><html><head><meta charset="utf-8"><title>Atlas Free QR labels</title><style>
+body{font-family:system-ui,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.l{border:1px dashed #bbb;border-radius:6px;padding:8px;text-align:center;break-inside:avoid}.l img{width:110px;height:110px;image-rendering:pixelated}
+.l b{display:block;font-size:13px}.l span{font-size:11px;color:#555}@media print{.l{border-color:#ddd}}</style></head>
+<body><p>Open this file and print it (Cmd+P / Ctrl+P) on sticker paper.</p><div class="g">${cells}</div></body></html>`;
+  saveFile('atlas-free-qr-labels.html', doc, 'text/html');
+}
+
+render();
+if (view === 'scan') startScanner();
+</script>
+</body>
+</html>
