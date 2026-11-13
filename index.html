@@ -215,7 +215,8 @@ async function change(request, okMsg) {
 async function refresh() {
   try { await loadAll(); } catch (e) { toast(errText(e)); return; }
   if (db.session && !member(db.session)) { signOut(NOT_TEAM); return; }
-  if (view !== 'scan' && view !== 'login') render();
+  // Only redraw screens that show shared data; the check-out screens keep what the person is typing.
+  if (['home', 'admin', 'event', 'success', 'labels'].includes(view)) render();
 }
 
 const $ = (id) => document.getElementById(id);
@@ -434,6 +435,7 @@ function vScan() {
 }
 
 function vItem() {
+  if (!flow?.current) return `<p class="muted">Saving…</p>`;   // between "Done" and the saved receipt
   const c = flow.current, it = item(c.itemId);
   let note = `${it.qty} in stock · ${h(it.location)}`;
   if (flow.dir === 'out') {
