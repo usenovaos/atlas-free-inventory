@@ -233,11 +233,12 @@ const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 const fmtDate = (iso) => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 // In-page yes/no box (the claude.ai viewer blocks the browser's confirm()).
-function ask(msg, okLabel) {
+// opts.html: extra content under the question (already escaped); opts.cancel: label of the no button.
+function ask(msg, okLabel, opts = {}) {
   return new Promise((resolve) => {
     const back = document.createElement('div'); back.className = 'dialog-back';
-    back.innerHTML = `<div class="dialog stack" role="dialog" aria-modal="true"><p>${h(msg)}</p>
-      <div class="two"><button class="btn ghost" data-v="0">Keep going</button><button class="btn" data-v="1">${h(okLabel)}</button></div></div>`;
+    back.innerHTML = `<div class="dialog stack" role="dialog" aria-modal="true"><p>${h(msg)}</p>${opts.html || ''}
+      <div class="two"><button class="btn ghost" data-v="0">${h(opts.cancel || 'Keep going')}</button><button class="btn" data-v="1">${h(okLabel)}</button></div></div>`;
     back.addEventListener('click', (e) => {
       const v = e.target.closest('[data-v]'); if (!v && e.target !== back) return;
       back.remove(); resolve(!!v && v.dataset.v === '1');
@@ -520,7 +521,8 @@ function aActivity() {
         <div class="row" style="gap:8px"><span class="pill ${t.dir}">${t.dir === 'out' ? 'Out' : 'In'}</span><strong>${h(TYPES[t.type].label)}</strong>${t.eventId ? `<span class="small">${h(ev(t.eventId)?.name)}</span>` : ''}${t.donor ? `<span class="small">for ${h(t.donor)}</span>` : ''}</div>
         <div class="small muted">${h(t.user)} · ${fmtDate(t.at)}</div>
         <ul class="txlines small">${t.lines.map((l) => `<li>${l.qty} × ${h(itemName(l.itemId))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
-      </div></li>`).join('')}</ul>` : `<p class="muted">${db.tx.length ? 'Nothing matches these filters.' : 'No activity yet. Check-outs and check-ins will show here.'}</p>`}
+      </div>
+      <button class="btn danger sm" onclick="deleteEntry('${t.id}')" aria-label="Delete this ${t.dir === 'out' ? 'check-out' : 'check-in'} by ${h(t.user)}">Delete</button></li>`).join('')}</ul>` : `<p class="muted">${db.tx.length ? 'Nothing matches these filters.' : 'No activity yet. Check-outs and check-ins will show here.'}</p>`}
   </div>`;
 }
 function aItems() {
@@ -773,6 +775,25 @@ async function deleteItem(id) {
   const it = item(id);
   if (!(await ask(`Delete ${it.name}? It disappears from the inventory and can't be scanned. Past check-outs still show it.`, 'Delete'))) return;
   await change(sb.from('items').update({ deleted: true }).eq('id', Number(id)).select(), `Deleted ${it.name}.`);
+}
+// Deleting an entry undoes its stock change: a check-out's items go back, a check-in's items come out.
+async function deleteEntry(id) {
+  const t = db.tx.find((x) => x.id === id); if (!t) return;
+  const out = t.dir === 'out';
+  const per = {};
+  for (const l of t.lines) per[l.itemId] = (per[l.itemId] || 0) + l.qty;
+  const short = Object.entries(per).find(([iid, q]) => !out && item(iid).qty < q);
+  if (short) { const [iid, q] = short; toast(`Can't delete: this check-in added ${q} ${itemName(iid)}, but only ${item(iid).qty} are in stock now.`); return; }
+  const rows = Object.entries(per).map(([iid, q]) => {
+    const now = item(iid).qty, after = now + (out ? q : -q);
+    return `<li><strong>${out ? '+' : '−'}${q}</strong> ${h(itemName(iid))} <span class="muted">(${now} → ${after} in stock)</span></li>`;
+  }).join('');
+  const ok = await ask(
+    out ? `Delete this check-out by ${t.user}? These items go back into inventory:` : `Delete this check-in by ${t.user}? These items come out of inventory:`,
+    'Confirm delete',
+    { cancel: 'Cancel', html: `<ul class="txlines">${rows}</ul><p class="small muted">The entry disappears from the history.</p>` });
+  if (!ok) return;
+  await change(sb.rpc('delete_transaction', { p_id: Number(id) }), out ? 'Deleted. The items are back in inventory.' : 'Deleted. The items were taken out of inventory.');
 }
 async function addEvent() {
   const name = $('neName').value.trim(); if (!name) return;
