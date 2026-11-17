@@ -4,145 +4,185 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Atlas Free Inventory</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<!-- The brand font is Garet (Book to Bold). It is used when installed; Plus Jakarta Sans is the free stand-in with the same geometric shapes. -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <style>
+  /* Atlas Free Brand Book 2025: bold blue, black and white text, lots of white space; supporting colours only as small pops, never for text. */
   :root {
-    --blue: #3355F0;
-    --blue-dark: #2440D6;
-    --blue-soft: #E8ECFE;
-    --cream: #FAF7F2;
-    --card: #FFFFFF;
-    --ink: #141414;
-    --muted: #5E5A55;
-    --line: #E6E1D8;
-    --red: #C62E2E;
-    --red-soft: #FBE9E9;
-    --green: #1E7F4F;
-    --green-soft: #E3F4EA;
-    --amber: #8A5A00;
-    --amber-soft: #FDF1D8;
-    --radius: 12px;
+    --blue: #2954FF;
+    --blue-dark: #1C3FD9;
+    --blue-soft: #EBEFFF;
+    --ink: #111111;
+    --muted: #5A5D66;
+    --line: #E3E5EC;
+    --surface: #F5F6FA;
+    --white: #FFFFFF;
+    --sky: #74C5E7;
+    --green: #009963;
+    --green-soft: #E2F4EC;
+    --yellow: #FFCC29;
+    --yellow-soft: #FFF4D1;
+    --red: #C8102E;          /* functional only: delete and errors */
+    --red-soft: #FCE8EB;
+    --radius: 14px;
+    --font: Garet, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    background: var(--cream);
+    background: var(--white);
     color: var(--ink);
-    font: 400 16px/1.5 Figtree, system-ui, -apple-system, sans-serif;
+    font: 400 16px/1.6 var(--font);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { font-family: Sora, Figtree, system-ui, sans-serif; letter-spacing: -0.01em; margin: 0; }
-  h1 { font-size: 26px; line-height: 1.2; }
-  h2 { font-size: 20px; line-height: 1.25; }
+  h1, h2, h3 { font-weight: 700; line-height: 1.3; margin: 0; }
+  h1 { font-size: 26px; }
   h3 { font-size: 16px; }
+  /* Section titles: Garet Bold all caps with 300 tracking, in blue. */
+  h2, .caps { font-size: 13px; text-transform: uppercase; letter-spacing: .3em; color: var(--blue); }
   p { margin: 0; }
   button, input, select { font: inherit; color: inherit; }
 
-  .topbar { background: var(--blue); color: #fff; }
-  .topbar-inner { max-width: 960px; margin: 0 auto; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 12px; }
-  .brand { font-family: Sora, sans-serif; font-weight: 700; font-size: 18px; line-height: 1.1; flex: 1; min-width: 0; }
-  .brand small { display: block; font-family: Figtree, sans-serif; font-weight: 500; font-size: 13px; opacity: .85; }
-  .who { font-size: 13px; text-align: right; opacity: .95; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46vw; }
-  .who button { background: none; border: 0; color: #fff; text-decoration: underline; padding: 0; cursor: pointer; font-size: 13px; }
-  .tabs { max-width: 960px; margin: 0 auto; padding-block: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 4px; overflow-x: auto; }
-  .tab { background: none; border: 0; color: rgba(255,255,255,.8); padding: 10px 12px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
-  .tab.on { color: #fff; border-bottom-color: #fff; }
-  .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #fff; color: var(--blue); font-size: 12px; text-align: center; margin-left: 4px; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--line); }
+  .topbar-inner { max-width: 1040px; margin: 0 auto; padding-block: 14px 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .brand img { height: 26px; width: auto; display: block; }
+  .brand span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3em; color: var(--ink); border-left: 1px solid var(--line); padding-left: 12px; }
+  .who { font-size: 13px; text-align: right; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 42vw; line-height: 1.4; }
+  .who button { background: none; border: 0; color: var(--blue); text-decoration: underline; padding: 0; cursor: pointer; font-size: 13px; font-weight: 500; }
+  .tabs { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; overflow-x: auto; }
+  .tab { background: none; border: 0; color: var(--muted); padding: 12px 4px 10px; margin-right: 16px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .3em; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .tab.on { color: var(--blue); border-bottom-color: var(--blue); }
+  .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; letter-spacing: 0; text-align: center; margin-left: 2px; }
 
-  main { max-width: 960px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .dialog-back { position: fixed; inset: 0; background: rgba(20,20,20,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
-  .dialog { background: var(--card); border-radius: var(--radius); padding: 20px; max-width: 400px; width: 100%; }
+  main { max-width: 1040px; margin: 0 auto; padding-block: 24px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .dialog-back { position: fixed; inset: 0; background: rgba(17,17,17,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+  .dialog { background: var(--white); border-radius: var(--radius); padding: 24px; max-width: 420px; width: 100%; }
   .photo-btn { position: relative; overflow: hidden; }
   .photo-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .stack > * + * { margin-top: 16px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
   .muted { color: var(--muted); }
   .small { font-size: 14px; }
-  .sample { display: inline-block; font-size: 12px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 2px 10px; }
+  .lead { line-height: 1.7; }
+  .sample { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3em; color: var(--ink); background: var(--yellow-soft); border-radius: 999px; padding: 3px 10px 3px calc(10px + .3em); }
 
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border-radius: 10px; border: 2px solid var(--blue); background: var(--blue); color: #fff; font-weight: 600; cursor: pointer; text-decoration: none; }
+  /* Buttons: Garet Bold all caps, 300 tracking. Extra left padding balances the tracking after the last letter. */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 18px 12px calc(18px + .3em); border-radius: 10px; border: 2px solid var(--blue); background: var(--blue); color: #fff; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .3em; line-height: 1.3; text-align: center; cursor: pointer; text-decoration: none; }
   .btn:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
   .btn.ghost { background: transparent; color: var(--blue); }
   .btn.ghost:hover { background: var(--blue-soft); }
   .btn.danger { background: transparent; color: var(--red); border-color: var(--red); }
-  .btn.sm { min-height: 40px; padding: 8px 14px; font-size: 14px; }
+  .btn.danger:hover { background: var(--red-soft); }
+  .btn.sm { min-height: 40px; padding: 8px 12px 8px calc(12px + .3em); font-size: 11px; }
   .btn.block { width: 100%; }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn-xl { min-height: 72px; font-size: 20px; font-family: Sora, sans-serif; border-radius: 14px; }
-  .link { background: none; border: 0; padding: 0; color: var(--blue); text-decoration: underline; cursor: pointer; font-weight: 600; }
+  .btn-xl { min-height: 76px; font-size: 16px; border-radius: var(--radius); }
+  .link { background: none; border: 0; padding: 0; color: var(--blue); text-decoration: underline; cursor: pointer; font-weight: 700; font-size: 15px; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .row > .grow { flex: 1; min-width: 0; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
 
-  label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  label, legend { display: block; font-weight: 700; font-size: 14px; margin-bottom: 6px; padding: 0; }
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   input[type=text], input[type=email], input[type=password], input[type=number], input[type=search], input[type=date], select {
     width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid var(--line); border-radius: 10px; background: #fff;
   }
-  input:focus, select:focus, .btn:focus-visible, .tab:focus-visible, .choice:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-color: var(--blue); }
-  .error { color: var(--red); font-size: 14px; font-weight: 600; }
+  input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--blue); margin: 0; flex: none; }
+  input:focus, select:focus, .btn:focus-visible, .tab:focus-visible, .choice:focus-visible, summary:focus-visible, .link:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-color: var(--blue); }
+  .error { color: var(--red); font-size: 14px; font-weight: 700; }
+  .error:empty { display: none; }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 520px) { .choices { grid-template-columns: 1fr; } }
-  .choice { text-align: left; background: #fff; border: 2px solid var(--line); border-radius: var(--radius); padding: 18px 16px; cursor: pointer; }
+  .choice { text-align: left; background: #fff; border: 2px solid var(--line); border-radius: var(--radius); padding: 18px 16px; cursor: pointer; line-height: 1.4; }
   .choice:hover { border-color: var(--blue); }
-  .choice strong { display: block; font-family: Sora, sans-serif; font-size: 17px; }
+  .choice strong { display: block; font-size: 17px; margin-bottom: 2px; }
   .choice span { color: var(--muted); font-size: 14px; }
 
   .items { list-style: none; margin: 0; padding: 0; }
-  .items li { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
-  .items li:first-child { border-top: 0; }
-  .items .name { font-weight: 600; }
-  .qty { font-family: Sora, sans-serif; font-weight: 700; font-size: 20px; text-align: right; min-width: 56px; }
-  .qty small { display: block; font-family: Figtree, sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); }
-  .pill { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 10px; }
-  .pill.out { background: var(--blue-soft); color: var(--blue-dark); }
-  .pill.in { background: var(--green-soft); color: var(--green); }
-  .pill.warn { background: var(--amber-soft); color: var(--amber); }
-  .pill.zero { background: var(--red-soft); color: var(--red); }
-  .pill.grey { background: #EEE; color: var(--muted); }
+  .items > li { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); line-height: 1.4; }
+  .items > li:first-child { border-top: 0; }
+  .items .name { font-weight: 700; }
+  .qty { font-weight: 700; font-size: 20px; text-align: right; min-width: 48px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; border-radius: 999px; padding: 2px 10px; color: var(--ink); line-height: 1.6; white-space: nowrap; }
+  .pill.out { background: var(--blue-soft); }
+  .pill.in { background: var(--green-soft); }
+  .pill.warn { background: var(--yellow-soft); }
+  .pill.zero { background: var(--red-soft); }
+  .pill.grey { background: var(--surface); color: var(--muted); }
 
-  .flowchip { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; background: var(--blue-soft); color: var(--blue-dark); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 6px 14px; }
+  /* Inventory grid: photo, name, number, then a collapsible list of sizes. */
+  .grid { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; align-items: start; }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
+  .tile { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; min-width: 0; }
+  .ph { aspect-ratio: 1; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ph img.mark { width: 34%; height: auto; opacity: .16; object-fit: contain; }
+  .tile-body { padding: 12px 12px 4px; line-height: 1.35; }
+  .tname { font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
+  .tnum { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tile details { border-top: 1px solid var(--line); margin-top: 10px; }
+  .tile summary { list-style: none; display: flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; font-size: 13px; font-weight: 700; }
+  .tile summary::-webkit-details-marker { display: none; }
+  .tile summary .chev { margin-left: auto; width: 18px; height: 18px; flex: none; transition: transform 150ms ease; color: var(--blue); }
+  .tile details[open] .chev { transform: rotate(180deg); }
+  .sizelist { list-style: none; margin: 0 0 6px; padding: 0; font-size: 14px; }
+  .sizelist li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-top: 1px dashed var(--line); }
+  .sizelist li.none { color: var(--muted); }
+  .tile .loc { font-size: 13px; color: var(--muted); padding-bottom: 10px; }
+
+  .thumb { width: 56px; height: 56px; border-radius: 10px; flex: none; }
+  .thumb img.mark { width: 50%; }
+
+  .flowchip { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; background: var(--blue-soft); color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 999px; padding: 6px 14px; line-height: 1.4; }
   #reader { width: 100%; max-width: 420px; margin: 0 auto; border-radius: var(--radius); overflow: hidden; background: #000; min-height: 240px; }
   #reader video { display: block; }
-  .stepper { display: flex; align-items: stretch; gap: 8px; max-width: 260px; }
-  .stepper button { width: 56px; min-height: 56px; border-radius: 10px; border: 2px solid var(--blue); background: #fff; color: var(--blue); font-size: 26px; font-weight: 700; cursor: pointer; }
-  .stepper input { text-align: center; font-size: 22px; font-weight: 700; min-height: 56px; }
+  .stepper { display: flex; align-items: stretch; gap: 8px; max-width: 240px; }
+  .stepper button { width: 52px; min-height: 52px; border-radius: 10px; border: 2px solid var(--blue); background: #fff; color: var(--blue); font-size: 24px; font-weight: 700; cursor: pointer; flex: none; }
+  .stepper button:disabled { opacity: .35; cursor: not-allowed; }
+  .stepper input { text-align: center; font-size: 20px; font-weight: 700; min-height: 52px; min-width: 0; }
+  .sizeqty > li { flex-wrap: wrap; }
+  .sizeqty .stepper { width: 196px; flex: none; }
+  @media (max-width: 600px) { .who .email { display: none; } }
+  /* Admin items: photo, details, total; Edit and Delete under the details on phones. */
+  .adm > li { display: grid; grid-template-columns: 56px 1fr auto; gap: 4px 12px; align-items: center; }
+  .adm .acts { grid-column: 2 / -1; display: flex; gap: 8px; }
+  @media (min-width: 700px) { .adm > li { grid-template-columns: 56px 1fr auto auto; } .adm .acts { grid-column: auto; } }
   .back { margin-bottom: 4px; }
 
+  /* Admin item form: size checkboxes with a quantity beside each checked size. */
+  .sizegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  @media (max-width: 520px) { .sizegrid { grid-template-columns: 1fr 1fr; } }
+  .sz { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; min-height: 52px; }
+  .sz.on { border-color: var(--blue); background: var(--blue-soft); }
+  .sz label { display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; flex: 1; min-width: 0; font-size: 15px; }
+  .sz input[type=number] { min-height: 38px; width: 68px; padding: 6px 8px; text-align: center; flex: none; }
+  .orow { display: grid; grid-template-columns: 1fr 88px auto; gap: 8px; align-items: center; }
+  .photo-edit { display: grid; grid-template-columns: 140px 1fr; gap: 16px; align-items: center; }
+  @media (max-width: 520px) { .photo-edit { grid-template-columns: 110px 1fr; } }
+  .photo-edit .ph { border-radius: 12px; }
+
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px; font-weight: 600; max-width: calc(100% - 32px); z-index: 10; }
-  .table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .table th, .table td { text-align: left; padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
-  .table th { border-top: 0; color: var(--muted); font-weight: 600; }
-  .scroll { overflow-x: auto; position: relative; }
-  @media (max-width: 640px) {
-    .items-table thead { display: none; }
-    .items-table, .items-table tbody { display: block; }
-    .items-table tr { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
-    .items-table tr:first-child { border-top: 0; }
-    .items-table td { display: block; border: 0; padding: 0; min-width: 0; }
-    .items-table td:nth-child(1), .items-table td:nth-child(2) { grid-column: 1 / -1; }
-    .items-table td[data-label]::before { content: attr(data-label); display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-    .items-table input { min-width: 0 !important; width: 100% !important; }
-  }
-  .txlines { margin: 6px 0 0; padding-left: 18px; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px; font-weight: 500; max-width: calc(100% - 32px); z-index: 30; line-height: 1.4; }
+  .txlines { margin: 6px 0 0; padding-left: 18px; line-height: 1.5; }
 
   .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
-  .label { background: #fff; border: 1px dashed var(--line); border-radius: 8px; padding: 10px; text-align: center; break-inside: avoid; }
+  .label { background: #fff; border: 1px dashed var(--line); border-radius: 8px; padding: 10px; text-align: center; break-inside: avoid; line-height: 1.35; }
   .label img { width: 120px; height: 120px; image-rendering: pixelated; }
   .label .lname { font-weight: 700; font-size: 14px; }
   .label .lcode { font-size: 12px; color: var(--muted); }
   @media print {
     .topbar, .noprint, .toast { display: none !important; }
-    body { background: #fff; }
     main { padding: 0; }
     .label { border: 1px solid #ccc; }
   }
@@ -152,48 +192,68 @@
 <div id="app"></div>
 <div id="fileReader" hidden></div>
 <script>
-// Atlas Free Inventory. Data lives in Supabase and is shared by the whole team; the access rules are in supabase/setup.sql.
+// Atlas Free Inventory. Data lives in Supabase and is shared by the whole team; the access rules are in supabase/*.sql.
 const SUPABASE_URL = 'https://carcpunahdjefmbgyxfc.supabase.co';
 // The publishable key is made to sit in a web page; the database rules decide what each person may do.
 const SUPABASE_KEY = 'sb_publishable_hCqGc_Je1kH7ETqB2iatLg_I8mP-i6h';
 const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const PHOTOS = 'item-photos';
 const TYPES = {
   general: { label: 'General checkout', hint: 'Everyday use, office or outreach' },
   event:   { label: 'Specific event', hint: 'Items for an event campaign' },
   donor:   { label: 'Donor gift', hint: 'A gift for a named donor' },
   merch:   { label: 'Merch', hint: 'Shirts, totes and other merch' },
 };
-const NOT_TEAM = 'This email is not on the team. Ask an admin to add you in Admin › People.';
+const SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+const NOT_TEAM = 'This email isn\'t on the team yet. Ask an admin to add you in Admin › People.';
+const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
-const emptyDb = () => ({ items: [], events: [], requests: [], tx: [], members: [], session: null });
+const emptyDb = () => ({ items: [], stock: {}, events: [], requests: [], tx: [], members: [], session: null });
 let db = emptyDb();
 let view = 'loading';
 let loginMode = 'signin';   // 'signin' | 'signup' (first time: choose a password)
 let adminTab = 'activity';
-let flow = null;      // { dir: 'out'|'in', type, eventId, donor, lines: [{itemId, qty, donor}], current }
+let flow = null;      // { dir: 'out'|'in', type, eventId, donor, lines: [{itemId, size, qty, donor}], current: {itemId, donor} }
 let lastTx = null;
+let form = null;      // the admin's item being added or edited: { id, photoPath, newPhoto, preview, removePhoto }
 let search = '';
 let actFilter = { dir: '', type: '', q: '' };
 let scanner = null;
 let handling = false;
 let busy = false;
+const photoUrls = {};  // photo path -> { url, until } (signed links, the bucket is private)
 
 async function loadAll() {
   const res = await Promise.all([
     sb.from('items').select('*').order('id'),
+    sb.from('item_stock').select('*'),
     sb.from('events').select('*').order('id'),
     sb.from('event_requests').select('*').order('id'),
     sb.from('transactions').select('*, transaction_lines(*)').order('id'),
     sb.from('members').select('*').order('added_at'),
   ]);
   const bad = res.find((r) => r.error); if (bad) throw bad.error;
-  const [items, events, requests, tx, members] = res.map((r) => r.data);
-  db.items = items.map((i) => ({ id: String(i.id), code: i.code, name: i.name, location: i.location, qty: i.qty, deleted: i.deleted }));
+  const [items, stock, events, requests, tx, members] = res.map((r) => r.data);
+  db.items = items.map((i) => ({ id: String(i.id), code: i.code, name: i.name, location: i.location, qty: i.qty, photo: i.photo_path || '', deleted: i.deleted }));
+  db.stock = {};
+  for (const s of stock.sort((a, b) => a.sort - b.sort || sizeRank(a.size) - sizeRank(b.size))) (db.stock[String(s.item_id)] ||= []).push({ size: s.size, qty: s.qty });
   db.events = events.map((e) => ({ id: String(e.id), name: e.name, date: e.event_date || '', status: e.status, closeRequestedBy: e.close_requested_by }));
   db.requests = requests.map((r) => ({ id: String(r.id), name: r.name, date: r.event_date || '', by: r.requested_by, at: r.created_at }));
   db.tx = tx.map((t) => ({ id: String(t.id), dir: t.dir, type: t.type, eventId: t.event_id ? String(t.event_id) : null, donor: t.donor, user: t.user_email, at: t.created_at,
-    lines: t.transaction_lines.sort((a, b) => a.id - b.id).map((l) => ({ itemId: String(l.item_id), qty: l.qty, donor: l.donor })) }));
+    lines: t.transaction_lines.sort((a, b) => a.id - b.id).map((l) => ({ itemId: String(l.item_id), size: l.size || '', qty: l.qty, donor: l.donor })) }));
   db.members = members.map((m) => ({ email: m.email, admin: m.is_admin }));
+  loadPhotos();
+}
+// Fetches signed links for photos not yet linked (or about to expire), then redraws the pictures.
+async function loadPhotos() {
+  const now = Date.now();
+  const paths = [...new Set(db.items.filter((i) => i.photo && !(photoUrls[i.photo]?.until > now + 60e3)).map((i) => i.photo))];
+  if (!paths.length) return;
+  const { data, error } = await sb.storage.from(PHOTOS).createSignedUrls(paths, 3600);
+  if (error || !data) return;
+  for (const d of data) if (d.signedUrl) photoUrls[d.path] = { url: d.signedUrl, until: now + 3600e3 };
+  if (view === 'home') renderList();
+  else if (view === 'admin' && adminTab === 'items') render();
 }
 // The database's own messages (stock, last admin, closed event) are written for people; anything else gets a plain wrapper.
 function errText(e) {
@@ -215,7 +275,7 @@ async function change(request, okMsg) {
 async function refresh() {
   try { await loadAll(); } catch (e) { toast(errText(e)); return; }
   if (db.session && !member(db.session)) { signOut(NOT_TEAM); return; }
-  // Only redraw screens that show shared data; the check-out screens keep what the person is typing.
+  // Only redraw screens that show shared data; the check-out screens and the item form keep what the person is typing.
   if (['home', 'admin', 'event', 'success', 'labels'].includes(view)) render();
 }
 
@@ -225,20 +285,33 @@ const item = (id) => db.items.find((i) => i.id === id);
 // Deleted items stay in db.items (marked deleted) so past check-outs still name them.
 const active = () => db.items.filter((i) => !i.deleted);
 const itemName = (id) => { const i = item(id); return i ? i.name + (i.deleted ? ' (deleted)' : '') : 'Unknown item'; };
+const lineName = (id, size) => itemName(id) + (size ? ` (${size})` : '');
+const sizeRank = (s) => { const i = SIZES.indexOf(s); return i < 0 ? 99 : i; };
+// An item's stock rows; one row with size '' means it comes in one size.
+const stockOf = (id) => db.stock[id] || [{ size: '', qty: item(id)?.qty || 0 }];
+const sized = (id) => stockOf(id).some((s) => s.size);
+const stockQty = (id, size) => stockOf(id).find((s) => s.size === size)?.qty || 0;
 const ev = (id) => db.events.find((e) => e.id === id);
 const member = (email) => db.members.find((m) => m.email === email);
 const isAdmin = () => !!member(db.session)?.admin;
 const adminCount = () => db.members.filter((m) => m.admin).length;
 const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 const fmtDate = (iso) => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+// Item numbers are numbers only. Old labels say AF-0003: the prefix and leading zeros are ignored when matching.
+const normCode = (s) => String(s).trim().toLowerCase().replace(/^af-/, '').replace(/^0+(?=\d)/, '');
+const nextNumber = () => String(db.items.reduce((m, i) => Math.max(m, /^\d+$/.test(i.code) ? Number(i.code) : 0), 0) + 1);
+function photoBox(it, cls = '') {
+  const url = it?.photo && photoUrls[it.photo]?.url;
+  return `<div class="ph ${cls}">${url ? `<img src="${h(url)}" alt="" loading="lazy">` : '<img class="mark" src="mark.svg" alt="">'}</div>`;
+}
 
 // In-page yes/no box (the claude.ai viewer blocks the browser's confirm()).
 // opts.html: extra content under the question (already escaped); opts.cancel: label of the no button.
 function ask(msg, okLabel, opts = {}) {
   return new Promise((resolve) => {
     const back = document.createElement('div'); back.className = 'dialog-back';
-    back.innerHTML = `<div class="dialog stack" role="dialog" aria-modal="true"><p>${h(msg)}</p>${opts.html || ''}
-      <div class="two"><button class="btn ghost" data-v="0">${h(opts.cancel || 'Keep going')}</button><button class="btn" data-v="1">${h(okLabel)}</button></div></div>`;
+    back.innerHTML = `<div class="dialog stack" role="dialog" aria-modal="true"><p class="lead">${h(msg)}</p>${opts.html || ''}
+      <div class="two"><button class="btn ghost" data-v="0">${h(opts.cancel || 'Keep going')}</button><button class="btn ${opts.danger ? 'danger' : ''}" data-v="1">${h(okLabel)}</button></div></div>`;
     back.addEventListener('click', (e) => {
       const v = e.target.closest('[data-v]'); if (!v && e.target !== back) return;
       back.remove(); resolve(!!v && v.dataset.v === '1');
@@ -261,7 +334,7 @@ async function saveFile(filename, data, type) {
 function toast(msg) {
   const old = document.querySelector('.toast'); if (old) old.remove();
   const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
-  document.body.appendChild(t); setTimeout(() => t.remove(), 2800);
+  document.body.appendChild(t); setTimeout(() => t.remove(), 3200);
 }
 
 async function stopScanner() {
@@ -276,82 +349,96 @@ async function go(v) {
   if (v === 'home' || v === 'admin' || v === 'event') refresh();   // pick up what teammates changed
 }
 
+// What is still out for an event, per item and size: { 'itemId|size': count }.
 function eventOutstanding(eventId) {
   const m = {};
   for (const t of db.tx) if (t.type === 'event' && t.eventId === eventId)
-    for (const l of t.lines) m[l.itemId] = (m[l.itemId] || 0) + (t.dir === 'out' ? l.qty : -l.qty);
+    for (const l of t.lines) { const k = l.itemId + '|' + l.size; m[k] = (m[k] || 0) + (t.dir === 'out' ? l.qty : -l.qty); }
   return m;
 }
+const keyName = (k) => { const [id, size] = k.split('|'); return lineName(id, size); };
 function eventAllBack(eventId) {
   const hadOut = db.tx.some((t) => t.type === 'event' && t.eventId === eventId && t.dir === 'out');
   return hadOut && Object.values(eventOutstanding(eventId)).every((n) => n <= 0);
 }
 
 // ---------- rendering ----------
+const LOGO = '<div class="brand"><img src="logo.svg" alt="Atlas Free" width="122" height="26"><span>Inventory</span></div>';
 function render() {
   const app = $('app');
   if (view === 'login') { app.innerHTML = vLogin(); return; }
-  if (view === 'loading') { app.innerHTML = `<header class="topbar"><div class="topbar-inner"><div class="brand">Atlas Free<small>Inventory</small></div></div></header><main><p class="muted">Loading…</p></main>`; return; }
+  if (view === 'loading') { app.innerHTML = `<header class="topbar"><div class="topbar-inner" style="padding-bottom:14px">${LOGO}</div></header><main><p class="muted">Loading…</p></main>`; return; }
   const pending = db.requests.length + db.events.filter((e) => e.status === 'close_requested').length;
-  const tab = view === 'admin' ? 'admin' : 'home';
+  const tab = ['admin', 'itemForm', 'labels'].includes(view) ? 'admin' : 'home';
   app.innerHTML = `
     <header class="topbar">
       <div class="topbar-inner">
-        <div class="brand">Atlas Free<small>Inventory</small></div>
-        <div class="who">${h(db.session)}${isAdmin() ? ' · Admin' : ''}<br><button onclick="signOut()">Sign out</button></div>
+        ${LOGO}
+        <div class="who"><span class="email">${h(db.session)}${isAdmin() ? ' · Admin' : ''}<br></span><button onclick="signOut()">Sign out</button></div>
       </div>
       <nav class="tabs" aria-label="Main">
         <button class="tab ${tab === 'home' ? 'on' : ''}" onclick="flow=null;go('home')">Inventory</button>
         ${isAdmin() ? `<button class="tab ${tab === 'admin' ? 'on' : ''}" onclick="go('admin')">Admin${pending ? `<span class="badge">${pending}</span>` : ''}</button>` : ''}
       </nav>
     </header>
-    <main>${({ home: vHome, type: vType, event: vEvent, request: vRequest, donor: vDonor, scan: vScan, item: vItem, success: vSuccess, admin: vAdmin, labels: vLabels })[view]()}</main>`;
+    <main>${({ home: vHome, type: vType, event: vEvent, request: vRequest, donor: vDonor, scan: vScan, item: vItem, success: vSuccess, admin: vAdmin, itemForm: vItemForm, labels: vLabels })[view]()}</main>`;
 }
 
 function vLogin() {
   const up = loginMode === 'signup';
   return `
-  <header class="topbar"><div class="topbar-inner"><div class="brand">Atlas Free<small>Inventory</small></div></div></header>
+  <header class="topbar"><div class="topbar-inner" style="padding-bottom:14px">${LOGO}</div></header>
   <main><div class="card stack" style="max-width:440px;margin:24px auto">
-    <h1>${up ? 'Set your password' : 'Sign in'}</h1>
-    <p class="muted">${up ? 'First time here? Use the email an admin added to the team, then choose a password.' : 'Use your work email. Every check-out and check-in records who did it.'}</p>
+    <h1>${up ? 'Set your password' : 'Welcome back'}</h1>
+    <p class="muted lead">${up ? 'First time here? Use the email an admin added to the team, then choose a password.' : 'Sign in with your work email. Every check-out and check-in records who did it.'}</p>
     <form onsubmit="event.preventDefault();signIn()" class="stack">
-      <div><label for="email">Email</label><input id="email" type="email" autocomplete="email" required placeholder="you@example.org"></div>
+      <div><label for="email">Email</label><input id="email" type="email" autocomplete="email" required placeholder="you@atlasfree.org"></div>
       <div><label for="password">${up ? 'Choose a password (8 or more characters)' : 'Password'}</label><input id="password" type="password" autocomplete="${up ? 'new-password' : 'current-password'}" required minlength="8"></div>
       <div id="loginErr" class="error" role="alert"></div>
-      <button class="btn block" id="loginBtn" type="submit">${up ? 'Set password and sign in' : 'Sign in'}</button>
+      <button class="btn block" id="loginBtn" type="submit">${up ? 'Set password' : 'Sign in'}</button>
     </form>
     <p class="small">${up ? 'Already set a password?' : 'First time here?'} <button class="link" onclick="loginMode='${up ? 'signin' : 'signup'}';render()">${up ? 'Sign in' : 'Set your password'}</button></p>
-    <p class="small muted">Only team members added by an admin can sign in. Forgot your password? Ask an admin.</p>
+    <p class="small muted">Only team members an admin has added can sign in. Forgot your password? Ask an admin.</p>
   </div></main>`;
 }
 
 function vHome() {
-  const q = search.trim().toLowerCase();
-  const list = active().filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q));
   return `<div class="stack">
     <div class="two">
       <button class="btn btn-xl block" onclick="startFlow('out')">Check out</button>
       <button class="btn btn-xl ghost block" onclick="startFlow('in')">Check in</button>
     </div>
-    <div class="card">
-      <div class="row" style="margin-bottom:8px"><h2 class="grow">Inventory</h2><span class="sample">Sample data</span></div>
-      <input type="search" id="search" placeholder="Search items or locations" value="${h(search)}" oninput="search=this.value;renderList()" aria-label="Search inventory">
-      <ul class="items" id="itemList" style="margin-top:8px">${itemRows(list)}</ul>
-    </div>
+    <div class="row" style="margin-top:32px"><h2 class="grow">Inventory</h2><span class="sample">Sample data</span></div>
+    <input type="search" id="search" placeholder="Search by name, number or location" value="${h(search)}" oninput="search=this.value;renderList()" aria-label="Search inventory">
+    <ul class="grid" id="itemList">${itemTiles()}</ul>
   </div>`;
 }
-function itemRows(list) {
-  if (!list.length) return `<li class="muted">No items match.</li>`;
-  return list.map((i) => `<li>
-    <div class="grow"><div class="name">${h(i.name)}</div><div class="small muted">${h(i.location)} · ${h(i.code)}</div></div>
-    <div class="qty">${i.qty}<small>${i.qty === 0 ? '<span class="pill zero">Out</span>' : i.qty <= 3 ? '<span class="pill warn">Low</span>' : 'in stock'}</small></div>
-  </li>`).join('');
-}
-function renderList() {
+function homeList() {
   const q = search.trim().toLowerCase();
-  $('itemList').innerHTML = itemRows(active().filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q)));
+  return active().filter((i) => !q || (i.name + ' ' + i.location + ' ' + i.code).toLowerCase().includes(q) || (q && normCode(q) === i.code));
 }
+function itemTiles() {
+  const list = homeList();
+  if (!list.length) return `<li class="muted" style="grid-column:1/-1">${active().length ? 'No items match.' : 'No items yet. An admin can add them in Admin › Items.'}</li>`;
+  const open = new Set([...document.querySelectorAll('#itemList details[open]')].map((d) => d.dataset.id));
+  return list.map((i) => {
+    const rows = stockOf(i.id), many = rows.some((s) => s.size);
+    const status = i.qty === 0 ? '<span class="pill zero">Out</span>' : i.qty <= 3 ? '<span class="pill warn">Low</span>' : '';
+    return `<li class="tile">
+      ${photoBox(i)}
+      <div class="tile-body">
+        <div class="tname">${h(i.name)}</div>
+        <div class="tnum">Item #${h(i.code)}</div>
+        <details data-id="${i.id}" ${open.has(i.id) ? 'open' : ''}>
+          <summary aria-label="${h(i.name)}: ${many ? 'sizes and ' : ''}stock">${i.qty} in stock ${status}${CHEVRON}</summary>
+          ${many ? `<ul class="sizelist">${rows.map((s) => `<li class="${s.qty ? '' : 'none'}"><span>${h(s.size)}</span><strong>${s.qty}</strong></li>`).join('')}</ul>` : ''}
+          <div class="loc">${i.location ? h(i.location) : 'No location set'}</div>
+        </details>
+      </div>
+    </li>`;
+  }).join('');
+}
+function renderList() { if ($('itemList')) $('itemList').innerHTML = itemTiles(); }
 
 function verb() { return flow.dir === 'out' ? 'checking out' : 'checking in'; }
 function backBtn(to) { return `<button class="link back" onclick="go('${to}')">← Back</button>`; }
@@ -373,8 +460,8 @@ function vEvent() {
     ${open.length ? `<div class="choices">${open.map((e) => `
       <button class="choice" onclick="pickEvent('${e.id}')"><strong>${h(e.name)}</strong><span>${e.date ? h(e.date) + ' · ' : ''}${e.status === 'close_requested' ? 'Close requested' : 'Open'}</span></button>`).join('')}</div>`
       : `<div class="card muted">No open events yet.</div>`}
-    <div class="card"><p><strong>Don't see your event?</strong> Only an admin can add events.</p>
-      <button class="btn ghost sm" style="margin-top:10px" onclick="go('request')">Ask an admin to add it</button></div>
+    <div class="card stack"><p><strong>Don't see your event?</strong> Only an admin can add events.</p>
+      <button class="btn ghost sm" onclick="go('request')">Ask an admin to add it</button></div>
   </div>`;
 }
 
@@ -386,7 +473,7 @@ function vRequest() {
       <div><label for="rqName">Event name</label><input id="rqName" type="text" required placeholder="e.g. Spring Gala"></div>
       <div><label for="rqDate">Event date (optional)</label><input id="rqDate" type="date"></div>
       <div id="rqErr" class="error" role="alert"></div>
-      <button class="btn block" type="submit">Send request to admin</button>
+      <button class="btn block" type="submit">Send request</button>
     </form></div>`;
 }
 
@@ -409,11 +496,11 @@ function flowChip() {
 }
 function linesList() {
   if (!flow.lines.length) return '';
-  return `<div class="card"><h3>In this ${flow.dir === 'out' ? 'checkout' : 'check-in'} (${flow.lines.length})</h3>
-    <ul class="items">${flow.lines.map((l, idx) => `<li>
-      <div class="grow"><div class="name">${h(item(l.itemId).name)}</div>${l.donor ? `<div class="small muted">For ${h(l.donor)}</div>` : ''}</div>
+  return `<div class="card"><h2>In this ${flow.dir === 'out' ? 'checkout' : 'check-in'} (${flow.lines.length})</h2>
+    <ul class="items" style="margin-top:8px">${flow.lines.map((l, idx) => `<li>
+      <div class="grow"><div class="name">${h(lineName(l.itemId, l.size))}</div>${l.donor ? `<div class="small muted">For ${h(l.donor)}</div>` : ''}</div>
       <div class="qty">${l.qty}</div>
-      <button class="link" onclick="removeLine(${idx})" aria-label="Remove ${h(item(l.itemId).name)}">Remove</button></li>`).join('')}</ul>
+      <button class="link" onclick="removeLine(${idx})" aria-label="Remove ${h(lineName(l.itemId, l.size))}">Remove</button></li>`).join('')}</ul>
     <button class="btn block" style="margin-top:12px" onclick="complete()">Done</button></div>`;
 }
 
@@ -422,40 +509,57 @@ function vScan() {
     <div class="row"><div class="grow">${flowChip()}</div><button class="link" onclick="cancelFlow()">Cancel</button></div>
     <h1>Scan an item</h1>
     <div id="reader"></div>
-    <p id="camMsg" class="small muted" style="text-align:center">Point the camera at the item's QR code or barcode. It scans by itself.</p>
-    <label class="btn ghost block photo-btn" for="photoInput">Camera not working? Take a photo instead
+    <p id="camMsg" class="small muted" style="text-align:center">Point the camera at the item's QR code or barcode. It scans on its own.</p>
+    <label class="btn ghost block photo-btn" for="photoInput">Camera not working? Take a photo
       <input id="photoInput" type="file" accept="image/*" capture="environment" onchange="scanPhoto(this)"></label>
     <form class="card stack" onsubmit="event.preventDefault();onCode($('manualCode').value)">
-      <div><label for="manualCode">Or type the code on the label</label>
-        <div class="row"><input class="grow" id="manualCode" type="text" placeholder="e.g. AF-0003" autocapitalize="characters" style="flex:1"><button class="btn sm" type="submit">Find</button></div></div>
-      <div><label for="pickItem">Or pick from the list (prototype helper)</label>
-        <select id="pickItem" onchange="if(this.value)onCode(this.value)"><option value="">Choose an item…</option>${active().map((i) => `<option value="${h(i.code)}">${h(i.name)} (${i.qty} in stock)</option>`).join('')}</select></div>
+      <div><label for="manualCode">Or type the item number</label>
+        <div class="row"><input class="grow" id="manualCode" type="text" inputmode="numeric" placeholder="e.g. 3" style="flex:1"><button class="btn sm" type="submit">Find</button></div></div>
+      <div><label for="pickItem">Or pick it from the list</label>
+        <select id="pickItem" onchange="if(this.value)onCode(this.value)"><option value="">Choose an item…</option>${active().map((i) => `<option value="${h(i.code)}">${h(i.name)} · #${h(i.code)} (${i.qty} in stock)</option>`).join('')}</select></div>
     </form>
     ${linesList()}
   </div>`;
 }
 
+// Quantity for one size: what's left to take out (stock minus what's already in this checkout).
+function available(it, size) {
+  const inCart = flow.lines.filter((l) => l.itemId === it.id && l.size === size).reduce((s, l) => s + l.qty, 0);
+  return { stock: stockQty(it.id, size), inCart, left: stockQty(it.id, size) - inCart };
+}
 function vItem() {
   if (!flow?.current) return `<p class="muted">Saving…</p>`;   // between "Done" and the saved receipt
-  const c = flow.current, it = item(c.itemId);
-  let note = `${it.qty} in stock · ${h(it.location)}`;
-  if (flow.dir === 'out') {
-    const inCart = flow.lines.filter((l) => l.itemId === it.id).reduce((s, l) => s + l.qty, 0);
-    if (inCart) note += ` · ${inCart} already in this checkout`;
-  } else if (flow.type === 'event') {
-    const o = eventOutstanding(flow.eventId)[it.id] || 0;
-    note += ` · ${Math.max(o, 0)} still out for this event`;
-  }
+  const c = flow.current, it = item(c.itemId), out = flow.dir === 'out';
+  const owed = flow.type === 'event' && !out ? eventOutstanding(flow.eventId) : null;
+  const note = (size) => {
+    const a = available(it, size);
+    let n = `${a.stock} in stock`;
+    if (out && a.inCart) n += ` · ${a.inCart} already in this checkout`;
+    if (owed) n += ` · ${Math.max(owed[it.id + '|' + size] || 0, 0)} still out for this event`;
+    return n;
+  };
+  const stepper = (idx, size, value, min) => {
+    const max = out ? available(it, size).left : '';
+    return `<div class="stepper">
+      <button type="button" onclick="bump(${idx},-1,${min})" aria-label="One less${size ? ' ' + h(size) : ''}">−</button>
+      <input id="q${idx}" data-size="${h(size)}" type="number" inputmode="numeric" min="${min}" ${max !== '' ? `max="${max}"` : ''} value="${value}" aria-label="Quantity${size ? ' in size ' + h(size) : ''}">
+      <button type="button" onclick="bump(${idx},1,${min})" aria-label="One more${size ? ' ' + h(size) : ''}">+</button>
+    </div>`;
+  };
+  const rows = stockOf(it.id).filter((s) => s.size);
+  const qtyBlock = rows.length
+    ? `<fieldset><legend>How many of each size?</legend>
+        <ul class="items sizeqty">${rows.map((s, idx) => {
+          const none = out && available(it, s.size).left <= 0;
+          return `<li><div class="grow"><div class="name">${h(s.size)}</div><div class="small muted">${note(s.size)}</div></div>
+            ${none ? '<span class="pill zero">None left</span>' : stepper(idx, s.size, 0, 0)}</li>`;
+        }).join('')}</ul></fieldset>`
+    : `<div><label for="q0">How many are you ${verb()}?</label><p class="small muted" style="margin-bottom:8px">${note('')}</p>${stepper(0, '', 1, 1)}</div>`;
   return `<div class="stack">
     <div class="row"><div class="grow">${flowChip()}</div><button class="link" onclick="go('scan')">Cancel item</button></div>
     <div class="card stack">
-      <div><span class="small muted">${h(it.code)}</span><h1>${h(it.name)}</h1><p class="muted small">${note}</p></div>
-      <div><label for="qtyInput">Quantity ${flow.dir === 'out' ? 'checking out' : 'checking in'}</label>
-        <div class="stepper">
-          <button type="button" onclick="bump(-1)" aria-label="One less">−</button>
-          <input id="qtyInput" type="number" inputmode="numeric" min="1" value="${c.qty}">
-          <button type="button" onclick="bump(1)" aria-label="One more">+</button>
-        </div></div>
+      <div class="row" style="flex-wrap:nowrap">${photoBox(it, 'thumb')}<div class="grow"><span class="small muted">Item #${h(it.code)}${it.location ? ' · ' + h(it.location) : ''}</span><h1 style="font-size:22px">${h(it.name)}</h1></div></div>
+      ${qtyBlock}
       ${flow.type === 'donor' ? `<div><label for="lineDonor">Donor this item is for</label><input id="lineDonor" type="text" value="${h(c.donor)}"></div>` : ''}
       <div id="itemErr" class="error" role="alert"></div>
       <div class="two">
@@ -473,19 +577,19 @@ function vSuccess() {
   if (t.type === 'event' && t.dir === 'in') {
     const e = ev(t.eventId);
     if (e.status === 'close_requested') eventBox = `<div class="card"><span class="pill warn">Close requested</span> <span class="small muted">An admin will close ${h(e.name)}.</span></div>`;
-    else if (e.status === 'open' && eventAllBack(t.eventId)) eventBox = `<div class="card stack"><p><strong>Every item for ${h(e.name)} is back.</strong></p>
+    else if (e.status === 'open' && eventAllBack(t.eventId)) eventBox = `<div class="card stack"><p><strong>Everything for ${h(e.name)} is back.</strong></p>
       <button class="btn block" onclick="requestClose('${e.id}')">Request event to be closed</button></div>`;
     else {
       const out = Object.entries(eventOutstanding(t.eventId)).filter(([, n]) => n > 0);
-      eventBox = `<div class="card"><h3>Still out for ${h(e.name)}</h3><ul class="txlines">${out.map(([id, n]) => `<li>${n} × ${h(item(id).name)}</li>`).join('')}</ul></div>`;
+      eventBox = `<div class="card"><h2>Still out for ${h(e.name)}</h2><ul class="txlines">${out.map(([k, n]) => `<li>${n} × ${h(keyName(k))}</li>`).join('')}</ul></div>`;
     }
   }
   return `<div class="stack">
     <div class="card stack">
-      <span class="pill ${t.dir}">${t.dir === 'out' ? 'Checked out' : 'Checked in'}</span>
+      <span class="pill ${t.dir}" style="align-self:flex-start">${t.dir === 'out' ? 'Checked out' : 'Checked in'}</span>
       <h1>All set</h1>
       <p class="muted">${h(TYPES[t.type].label)}${t.eventId ? ' · ' + h(ev(t.eventId).name) : ''}${t.donor ? ' · for ' + h(t.donor) : ''} · ${fmtDate(t.at)}</p>
-      <ul class="txlines">${t.lines.map((l) => `<li>${l.qty} × ${h(itemName(l.itemId))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
+      <ul class="txlines">${t.lines.map((l) => `<li>${l.qty} × ${h(lineName(l.itemId, l.size))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
     </div>
     ${eventBox}
     <button class="btn ghost block" onclick="flow=null;go('home')">Back to inventory</button>
@@ -496,21 +600,21 @@ function vSuccess() {
 function vAdmin() {
   const tabs = { activity: 'Activity', items: 'Items', events: 'Events', people: 'People' };
   return `<div class="stack">
-    <div class="row noprint">${Object.entries(tabs).map(([k, l]) => `<button class="btn sm ${adminTab === k ? '' : 'ghost'}" onclick="adminTab='${k}';render()">${l}</button>`).join('')}</div>
+    <div class="row noprint" style="gap:8px">${Object.entries(tabs).map(([k, l]) => `<button class="btn sm ${adminTab === k ? '' : 'ghost'}" onclick="adminTab='${k}';render();if('${k}'==='items')loadPhotos()">${l}</button>`).join('')}</div>
     ${({ activity: aActivity, items: aItems, events: aEvents, people: aPeople })[adminTab]()}
   </div>`;
 }
 function filteredTx() {
   const q = actFilter.q.trim().toLowerCase();
   return db.tx.filter((t) => (!actFilter.dir || t.dir === actFilter.dir) && (!actFilter.type || t.type === actFilter.type) &&
-    (!q || [t.user, t.donor, t.eventId && ev(t.eventId)?.name, ...t.lines.map((l) => item(l.itemId)?.name + ' ' + (l.donor || ''))].join(' ').toLowerCase().includes(q))).slice().reverse();
+    (!q || [t.user, t.donor, t.eventId && ev(t.eventId)?.name, ...t.lines.map((l) => lineName(l.itemId, l.size) + ' ' + (l.donor || ''))].join(' ').toLowerCase().includes(q))).slice().reverse();
 }
 function aActivity() {
   const list = filteredTx();
   const outs = db.tx.filter((t) => t.dir === 'out').length, ins = db.tx.length - outs;
   return `<div class="card stack">
-    <div class="row"><h2 class="grow">All check-outs and check-ins</h2><button class="btn ghost sm" onclick="exportCsv()" ${db.tx.length ? '' : 'disabled'}>Download CSV</button></div>
-    <p class="small muted">${outs} check-outs · ${ins} check-ins</p>
+    <div class="row"><h2 class="grow">Check-outs and check-ins</h2><button class="btn ghost sm" onclick="exportCsv()" ${db.tx.length ? '' : 'disabled'}>Download CSV</button></div>
+    <p class="small muted">${outs} check-out${outs === 1 ? '' : 's'} · ${ins} check-in${ins === 1 ? '' : 's'}</p>
     <div class="two">
       <select aria-label="Direction" onchange="actFilter.dir=this.value;render()"><option value="">Out and in</option><option value="out" ${actFilter.dir === 'out' ? 'selected' : ''}>Check-outs</option><option value="in" ${actFilter.dir === 'in' ? 'selected' : ''}>Check-ins</option></select>
       <select aria-label="Type" onchange="actFilter.type=this.value;render()"><option value="">All types</option>${Object.entries(TYPES).map(([k, t]) => `<option value="${k}" ${actFilter.type === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select>
@@ -520,34 +624,94 @@ function aActivity() {
       <div class="grow">
         <div class="row" style="gap:8px"><span class="pill ${t.dir}">${t.dir === 'out' ? 'Out' : 'In'}</span><strong>${h(TYPES[t.type].label)}</strong>${t.eventId ? `<span class="small">${h(ev(t.eventId)?.name)}</span>` : ''}${t.donor ? `<span class="small">for ${h(t.donor)}</span>` : ''}</div>
         <div class="small muted">${h(t.user)} · ${fmtDate(t.at)}</div>
-        <ul class="txlines small">${t.lines.map((l) => `<li>${l.qty} × ${h(itemName(l.itemId))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
+        <ul class="txlines small">${t.lines.map((l) => `<li>${l.qty} × ${h(lineName(l.itemId, l.size))}${l.donor ? ` (for ${h(l.donor)})` : ''}</li>`).join('')}</ul>
       </div>
-      <button class="btn danger sm" onclick="deleteEntry('${t.id}')" aria-label="Delete this ${t.dir === 'out' ? 'check-out' : 'check-in'} by ${h(t.user)}">Delete</button></li>`).join('')}</ul>` : `<p class="muted">${db.tx.length ? 'Nothing matches these filters.' : 'No activity yet. Check-outs and check-ins will show here.'}</p>`}
+      <button class="btn danger sm" onclick="deleteEntry('${t.id}')" aria-label="Delete this ${t.dir === 'out' ? 'check-out' : 'check-in'} by ${h(t.user)}">Delete</button></li>`).join('')}</ul>` : `<p class="muted">${db.tx.length ? 'Nothing matches these filters.' : 'No activity yet. Check-outs and check-ins show up here.'}</p>`}
   </div>`;
 }
 function aItems() {
+  const list = active();
+  return `<div class="card stack">
+    <div class="row"><h2 class="grow">Items</h2><button class="btn ghost sm" onclick="go('labels')">QR labels</button><button class="btn sm" onclick="openItemForm(null)">Add item</button></div>
+    ${list.length ? `<ul class="items adm">${list.map((i) => {
+      const rows = stockOf(i.id).filter((s) => s.size);
+      return `<li>
+        ${photoBox(i, 'thumb')}
+        <div class="grow"><div class="name">${h(i.name)}</div>
+          <div class="small muted">#${h(i.code)}${i.location ? ' · ' + h(i.location) : ''}</div>
+          ${rows.length ? `<div class="small muted">${rows.map((s) => `${h(s.size)} ${s.qty}`).join(' · ')}</div>` : ''}</div>
+        <div class="qty">${i.qty}</div>
+        <div class="acts"><button class="btn ghost sm" onclick="openItemForm('${i.id}')" aria-label="Edit ${h(i.name)}">Edit</button>
+        <button class="btn danger sm" onclick="deleteItem('${i.id}')" aria-label="Delete ${h(i.name)}">Delete</button></div></li>`;
+    }).join('')}</ul>` : '<p class="muted">No items yet. Tap "Add item" to add the first one.</p>'}
+  </div>`;
+}
+function sizeTile(size, on, qty) {
+  return `<div class="sz ${on ? 'on' : ''}"><label><input type="checkbox" data-size="${size}" ${on ? 'checked' : ''} onchange="sizeToggle(this)"> ${size}</label>
+    <input type="number" min="0" inputmode="numeric" value="${qty}" aria-label="How many in size ${size}" ${on ? '' : 'hidden'}></div>`;
+}
+function otherRow(name = '', qty = 0) {
+  return `<div class="orow"><input type="text" class="oname" value="${h(name)}" placeholder="Size name, e.g. 6T" aria-label="Size name">
+    <input type="number" class="oqty" min="0" inputmode="numeric" value="${qty}" aria-label="How many in this size">
+    <button type="button" class="link" onclick="this.parentElement.remove();syncSizes()">Remove</button></div>`;
+}
+function vItemForm() {
+  const it = form.id ? item(form.id) : null;
+  const rows = it ? stockOf(it.id) : [];
+  const std = Object.fromEntries(rows.filter((s) => SIZES.includes(s.size)).map((s) => [s.size, s.qty]));
+  const others = rows.filter((s) => s.size && !SIZES.includes(s.size));
+  const one = rows.find((s) => !s.size);
+  const preview = form.preview || (!form.removePhoto && it?.photo && photoUrls[it.photo]?.url);
   return `<div class="stack">
-    <form class="card stack noprint" onsubmit="event.preventDefault();addItem()">
-      <h2>Add an item</h2>
+    <button class="link back" onclick="closeItemForm()">← Back to items</button>
+    <h1>${it ? 'Edit ' + h(it.name) : 'Add an item'}</h1>
+    <form class="card stack" onsubmit="event.preventDefault();saveItemForm()" novalidate>
+      <fieldset><legend>Photo</legend>
+        <div class="photo-edit">
+          <div class="ph" id="fiPhoto">${preview ? `<img src="${h(preview)}" alt="Photo of the item">` : '<img class="mark" src="mark.svg" alt="">'}</div>
+          <div class="stack">
+            <label class="btn ghost sm block photo-btn">Take photo<input type="file" accept="image/*" capture="environment" onchange="pickItemPhoto(this)"></label>
+            <label class="btn ghost sm block photo-btn">Upload photo<input type="file" accept="image/*" onchange="pickItemPhoto(this)"></label>
+            ${preview ? '<button type="button" class="link" onclick="removeItemPhoto()">Remove photo</button>' : ''}
+          </div>
+        </div>
+      </fieldset>
       <div class="two">
-        <div><label for="niName">Name</label><input id="niName" type="text" required></div>
-        <div><label for="niLoc">Location</label><input id="niLoc" type="text" required placeholder="e.g. Storage closet, shelf A"></div>
-        <div><label for="niQty">Quantity</label><input id="niQty" type="number" min="0" value="0" required></div>
-        <div><label for="niCode">Existing barcode (optional)</label><input id="niCode" type="text" placeholder="Leave empty to make a QR code"></div>
+        <div><label for="fiName">Name</label><input id="fiName" type="text" required value="${h(it?.name || '')}" placeholder="e.g. Atlas Free T-shirt"></div>
+        <div><label for="fiCode">Item number</label><input id="fiCode" type="text" inputmode="numeric" pattern="[0-9]*" required value="${h(it?.code || nextNumber())}"></div>
       </div>
-      <div id="niErr" class="error" role="alert"></div>
-      <button class="btn" type="submit">Add item</button>
+      <p class="small muted" style="margin-top:6px">Numbers only. It's what the QR label holds. Already has a barcode? Type its number here.</p>
+      <div><label for="fiLoc">Location</label><input id="fiLoc" type="text" value="${h(it?.location || '')}" placeholder="e.g. Storage closet, shelf A"></div>
+      <fieldset>
+        <legend>Sizes we carry</legend>
+        <p class="small muted" style="margin-bottom:10px">Check each size you carry, then enter how many you have. Leave them all unchecked if it comes in one size.</p>
+        <div class="sizegrid" id="sizeGrid">${SIZES.map((s) => sizeTile(s, s in std, std[s] ?? 0)).join('')}
+          <div class="sz ${others.length ? 'on' : ''}"><label><input type="checkbox" id="otherChk" ${others.length ? 'checked' : ''} onchange="sizeToggle(this)"> Other</label></div>
+        </div>
+        <div id="otherBox" class="stack" style="margin-top:12px" ${others.length ? '' : 'hidden'}>
+          <div id="otherRows" class="stack">${(others.length ? others : [{ size: '', qty: 0 }]).map((s) => otherRow(s.size, s.qty)).join('')}</div>
+          <button type="button" class="link" onclick="$('otherRows').insertAdjacentHTML('beforeend', otherRow())">+ Add another size</button>
+        </div>
+      </fieldset>
+      <div id="oneBox" ${rows.some((s) => s.size) ? 'hidden' : ''}><label for="fiQty">Quantity</label><input id="fiQty" type="number" min="0" inputmode="numeric" value="${one ? one.qty : 0}" style="max-width:160px"></div>
+      ${it ? '<p class="small muted">Changing a quantity here is a stock count correction. It isn\'t logged as a check-out.</p>' : ''}
+      <div id="fiErr" class="error" role="alert"></div>
+      <button class="btn block" id="fiSave" type="submit">${it ? 'Save changes' : 'Add item'}</button>
     </form>
-    <div class="card stack">
-      <div class="row"><h2 class="grow">Items</h2><button class="btn ghost sm" onclick="go('labels')">Print QR labels</button></div>
-      <div class="scroll"><table class="table items-table"><thead><tr><th>Item</th><th>Location</th><th>Qty</th><th><span class="sr-only">Delete</span></th></tr></thead><tbody>
-      ${active().map((i) => `<tr><td data-label="Item"><input type="text" aria-label="Name of ${h(i.name)}" value="${h(i.name)}" onchange="editItem('${i.id}','name',this.value)" style="min-width:180px"><div class="small muted" style="margin-top:4px">${h(i.code)}</div></td>
-        <td data-label="Location"><input type="text" aria-label="Location of ${h(i.name)}" value="${h(i.location)}" onchange="editItem('${i.id}','location',this.value)" style="min-width:160px"></td>
-        <td data-label="Quantity"><input type="number" min="0" aria-label="Quantity of ${h(i.name)}" value="${i.qty}" onchange="editItem('${i.id}','qty',this.value)" style="width:90px"></td>
-        <td><button class="btn danger sm" onclick="deleteItem('${i.id}')" aria-label="Delete ${h(i.name)}">Delete</button></td></tr>`).join('')}
-      </tbody></table></div>
-      <p class="small muted">Edit a name, location or quantity and it saves when you leave the box. Changing a quantity here is a stock count correction; it is not logged as a check-out.</p>
-    </div></div>`;
+  </div>`;
+}
+function syncSizes() {
+  const any = [...document.querySelectorAll('#sizeGrid input[type=checkbox]')].some((c) => c.checked);
+  $('oneBox').hidden = any;
+  $('otherBox').hidden = !$('otherChk').checked;
+}
+function sizeToggle(chk) {
+  const tile = chk.closest('.sz'); tile.classList.toggle('on', chk.checked);
+  const qty = tile.querySelector('input[type=number]');
+  if (qty) { qty.hidden = !chk.checked; if (chk.checked) qty.select(); }
+  if (chk.id === 'otherChk' && chk.checked && !$('otherRows').children.length) $('otherRows').insertAdjacentHTML('beforeend', otherRow());
+  syncSizes();
+  if (chk.id === 'otherChk' && chk.checked) $('otherRows').querySelector('.oname').focus();
 }
 function aEvents() {
   const statusPill = (e) => e.status === 'open' ? '<span class="pill in">Open</span>' : e.status === 'closed' ? '<span class="pill grey">Closed</span>' : '<span class="pill warn">Close requested</span>';
@@ -561,7 +725,7 @@ function aEvents() {
         <div><label for="neDate">Date (optional)</label><input id="neDate" type="date"></div></div>
       <button class="btn" type="submit">Create event</button>
     </form>
-    <div class="card"><h2>Events</h2><ul class="items">${db.events.slice().reverse().map((e) => {
+    <div class="card"><h2>Events</h2><ul class="items" style="margin-top:8px">${db.events.slice().reverse().map((e) => {
       const out = Object.values(eventOutstanding(e.id)).reduce((s, n) => s + Math.max(n, 0), 0);
       return `<li><div class="grow"><div class="name">${h(e.name)}</div>
         <div class="small muted">${statusPill(e)} ${out} item${out === 1 ? '' : 's'} still out${e.closeRequestedBy ? ' · close asked by ' + h(e.closeRequestedBy) : ''}</div></div>
@@ -571,10 +735,10 @@ function aEvents() {
 function aPeople() {
   return `<div class="stack"><div class="card stack">
     <h2>Team</h2>
-    <p class="small muted">Only the emails on this list can sign in. <strong>Members</strong> check items in and out. <strong>Admins</strong> can also see this Admin area: activity, items, events and the team.</p>
+    <p class="small muted lead">Only the emails on this list can sign in. <strong>Members</strong> check items in and out. <strong>Admins</strong> also manage activity, items, events and the team.</p>
     <form class="stack" onsubmit="event.preventDefault();addMember()">
-      <div><label for="nmEmail">Add a team member</label><input id="nmEmail" type="email" required placeholder="name@example.org"></div>
-      <label class="row" style="gap:8px;font-weight:500"><input id="nmAdmin" type="checkbox" style="width:20px;height:20px"> Make them an admin</label>
+      <div><label for="nmEmail">Add a team member</label><input id="nmEmail" type="email" required placeholder="name@atlasfree.org"></div>
+      <label class="row" style="gap:8px;font-weight:500"><input id="nmAdmin" type="checkbox"> Make them an admin</label>
       <div id="nmErr" class="error" role="alert"></div>
       <button class="btn" type="submit">Add to team</button>
     </form>
@@ -589,8 +753,8 @@ function aPeople() {
 function vLabels() {
   return `<div class="stack">
     <div class="row noprint"><button class="link" onclick="adminTab='items';go('admin')">← Back</button><span class="grow"></span><button class="btn sm" onclick="downloadLabels()">Download label sheet</button></div>
-    <p class="small muted noprint">Download the sheet, open it on a computer, print it on sticker paper, then put each label on its item or shelf.</p>
-    <div class="labels">${active().map((i) => `<div class="label"><img alt="QR code for ${h(i.code)}" src="${qrUrl(i.code)}"><div class="lname">${h(i.name)}</div><div class="lcode">${h(i.code)}</div></div>`).join('')}</div>
+    <p class="small muted noprint">Download the sheet, open it on a computer and print it on sticker paper. Then put each label on its item or shelf.</p>
+    <div class="labels">${active().map((i) => `<div class="label"><img alt="QR code for item ${h(i.code)}" src="${qrUrl(i.code)}"><div class="lname">${h(i.name)}</div><div class="lcode">Item #${h(i.code)}</div></div>`).join('')}</div>
   </div>`;
 }
 function qrUrl(text) {
@@ -600,7 +764,7 @@ function qrUrl(text) {
 
 // ---------- actions ----------
 async function boot() {
-  if (!sb) { $('app').innerHTML = '<main><div class="card">Atlas Free Inventory could not load. Check your internet connection and reload the page.</div></main>'; return; }
+  if (!sb) { $('app').innerHTML = '<main><div class="card">Atlas Free Inventory couldn\'t load. Check your internet connection and reload the page.</div></main>'; return; }
   const { data } = await sb.auth.getSession();
   if (data.session) await enter(data.session.user.email); else go('login');
 }
@@ -634,7 +798,7 @@ async function signIn() {
 }
 async function signOut(msg) {
   try { await sb.auth.signOut(); } catch (e) {}
-  db = emptyDb(); flow = null;
+  db = emptyDb(); flow = null; form = null;
   await go('login');
   if (typeof msg === 'string') $('loginErr').textContent = msg;
 }
@@ -655,23 +819,23 @@ async function cancelFlow() {
   if (flow.lines.length && !(await ask('Cancel and discard the items you scanned?', 'Discard'))) return;
   flow = null; go('home');
 }
-// includeDeleted: codes of deleted items are never handed out again, so old labels can't point at a new item.
+// includeDeleted: numbers of deleted items are never handed out again, so old labels can't point at a new item.
 function findItem(code, includeDeleted) {
-  const c = String(code).trim().toLowerCase();
-  return db.items.find((i) => (includeDeleted || !i.deleted) && i.code.toLowerCase() === c);
+  const c = normCode(code);
+  return db.items.find((i) => (includeDeleted || !i.deleted) && normCode(i.code) === c);
 }
 async function onCode(text) {
   if (handling || !text) return;
   handling = true;
   const it = findItem(text);
-  if (!it) { toast(`No item has the code "${text}".`); setTimeout(() => { handling = false; }, 1500); return; }
+  if (!it) { toast(`No item has the number "${text}".`); setTimeout(() => { handling = false; }, 1500); return; }
   if ('vibrate' in navigator) navigator.vibrate(60);
-  flow.current = { itemId: it.id, qty: 1, donor: flow.donor || '' };
+  flow.current = { itemId: it.id, donor: flow.donor || '' };
   await go('item');
   handling = false;
 }
 function startScanner() {
-  if (!window.Html5Qrcode) { $('camMsg').textContent = 'The scanner did not load (no internet?). Type the code instead.'; return; }
+  if (!window.Html5Qrcode) { $('camMsg').textContent = 'The scanner didn\'t load (no internet?). Type the item number instead.'; return; }
   scanner = new Html5Qrcode('reader', { verbose: false });
   scanner.start({ facingMode: 'environment' },
     { fps: 10, qrbox: (w, hgt) => { const s = Math.floor(Math.min(w, hgt) * 0.7); return { width: s, height: s }; } },
@@ -685,15 +849,19 @@ function startScanner() {
 async function scanPhoto(input) {
   const file = input.files && input.files[0]; input.value = '';
   if (!file) return;
-  if (!window.Html5Qrcode) { toast('The scanner did not load. Type the code instead.'); return; }
+  if (!window.Html5Qrcode) { toast('The scanner didn\'t load. Type the item number instead.'); return; }
   const text = await decodePhoto(file);
   if (text) onCode(text); else toast('No code found in that photo. Fill the frame with the label and try again.');
 }
-// Phone photos are 12+ megapixels and the decoder gives up on them, so try smaller copies and a centre crop.
-async function decodePhoto(file) {
+async function loadImage(file) {
   const url = URL.createObjectURL(file);
   const img = await new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = url; });
   URL.revokeObjectURL(url);
+  return img;
+}
+// Phone photos are 12+ megapixels and the decoder gives up on them, so try smaller copies and a centre crop.
+async function decodePhoto(file) {
+  const img = await loadImage(file);
   if (!img) return null;
   const W = img.naturalWidth, H = img.naturalHeight;
   const tries = [[0, 0, W, H, 1200], [W * .2, H * .2, W * .6, H * .6, 1000], [0, 0, W, H, 800], [0, 0, W, H, 1800]];
@@ -712,20 +880,29 @@ async function decodePhoto(file) {
     return null;
   } finally { try { reader.clear(); } catch (e) {} }
 }
-function bump(d) { const i = $('qtyInput'); i.value = Math.max(1, (parseInt(i.value, 10) || 0) + d); }
+function bump(idx, d, min) {
+  const i = $('q' + idx);
+  let v = Math.max(min, (parseInt(i.value, 10) || 0) + d);
+  if (i.max !== '') v = Math.min(v, Number(i.max));
+  i.value = v;
+}
 function addLine(finish) {
-  const qty = parseInt($('qtyInput').value, 10);
   const c = flow.current, it = item(c.itemId);
   const err = (m) => { $('itemErr').textContent = m; };
-  if (!qty || qty < 1) return err('Enter a quantity of 1 or more.');
+  const picks = [...document.querySelectorAll('main .stepper input')].map((i) => ({ size: i.dataset.size, qty: parseInt(i.value, 10) || 0 }));
+  const wanted = picks.filter((p) => p.qty > 0);
+  if (picks.some((p) => p.qty < 0)) return err('Quantities can\'t be below 0.');
+  if (!wanted.length) return err(sized(it.id) ? 'Enter how many for at least one size.' : 'Enter a quantity of 1 or more.');
   const donor = flow.type === 'donor' ? $('lineDonor').value.trim() : '';
   if (flow.type === 'donor' && !donor) return err('Enter the donor this item is for.');
   if (flow.dir === 'out') {
-    const inCart = flow.lines.filter((l) => l.itemId === it.id).reduce((s, l) => s + l.qty, 0);
-    if (qty + inCart > it.qty) return err(`Only ${it.qty - inCart} left in stock.`);
+    const over = wanted.find((p) => p.qty > available(it, p.size).left);
+    if (over) return err(`Only ${available(it, over.size).left} left${over.size ? ' in size ' + over.size : ''}.`);
   }
-  const same = flow.lines.find((l) => l.itemId === it.id && l.donor === donor);
-  if (same) same.qty += qty; else flow.lines.push({ itemId: it.id, qty, donor });
+  for (const p of wanted) {
+    const same = flow.lines.find((l) => l.itemId === it.id && l.size === p.size && l.donor === donor);
+    if (same) same.qty += p.qty; else flow.lines.push({ itemId: it.id, size: p.size, qty: p.qty, donor });
+  }
   flow.current = null;
   if (finish) complete(); else go('scan');
 }
@@ -736,7 +913,7 @@ async function complete() {
   busy = true;
   const { data: txId, error } = await sb.rpc('record_transaction', {
     p_dir: flow.dir, p_type: flow.type, p_event_id: flow.eventId ? Number(flow.eventId) : null, p_donor: flow.donor || '',
-    p_lines: flow.lines.map((l) => ({ item_id: Number(l.itemId), qty: l.qty, donor: l.donor })),
+    p_lines: flow.lines.map((l) => ({ item_id: Number(l.itemId), size: l.size, qty: l.qty, donor: l.donor })),
   });
   busy = false;
   if (error) {
@@ -751,29 +928,97 @@ async function complete() {
   flow = null; go('success');
 }
 async function requestClose(id) {
-  await change(sb.rpc('request_event_close', { p_event_id: Number(id) }), 'Close request sent to the admin.');
+  await change(sb.rpc('request_event_close', { p_event_id: Number(id) }), 'Close request sent to the admins.');
 }
 
-async function addItem() {
-  const name = $('niName').value.trim(), location = $('niLoc').value.trim(), qty = parseInt($('niQty').value, 10);
-  let code = $('niCode').value.trim();
-  if (!name || !location || isNaN(qty) || qty < 0) { $('niErr').textContent = 'Fill in name, location and a quantity of 0 or more.'; return; }
-  if (code && findItem(code, true)) { $('niErr').textContent = 'Another item already uses that code.'; return; }
-  if (!code) { let n = db.items.length + 1; do { code = 'AF-' + String(n++).padStart(4, '0'); } while (findItem(code, true)); }
-  await change(sb.from('items').insert({ code, name, location, qty }).select(), `Added ${name} (${code}).`);
+// ---------- admin: items ----------
+function openItemForm(id) { form = { id, newPhoto: null, preview: null, removePhoto: false }; go('itemForm'); }
+function closeItemForm() { if (form?.preview) URL.revokeObjectURL(form.preview); form = null; adminTab = 'items'; go('admin'); }
+// Phone photos are several MB; a 1000px JPEG keeps the grid quick and the free storage roomy.
+async function pickItemPhoto(input) {
+  const file = input.files && input.files[0]; input.value = '';
+  if (!file) return;
+  const img = await loadImage(file);
+  if (!img) { toast('That file isn\'t a photo this browser can open. Try a JPEG or PNG.'); return; }
+  const k = Math.min(1, 1000 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
+  if (form.preview) URL.revokeObjectURL(form.preview);
+  form.newPhoto = blob; form.preview = URL.createObjectURL(blob); form.removePhoto = false;
+  keepFormAndRender();
 }
-async function editItem(id, field, value) {
-  let v;
-  if (field === 'qty') { v = parseInt(value, 10); if (isNaN(v) || v < 0) { toast('Quantity must be 0 or more.'); render(); return; } }
-  else {
-    v = value.trim();
-    if (!v) { toast(field === 'name' ? 'The name can\'t be empty.' : 'The location can\'t be empty.'); render(); return; }
+function removeItemPhoto() {
+  if (form.preview) URL.revokeObjectURL(form.preview);
+  form.newPhoto = null; form.preview = null; form.removePhoto = true;
+  keepFormAndRender();
+}
+// Redraws the photo part of the form without losing what the admin typed.
+function keepFormAndRender() {
+  const it = form.id ? item(form.id) : null;
+  const url = form.preview || (!form.removePhoto && it?.photo && photoUrls[it.photo]?.url);
+  $('fiPhoto').innerHTML = url ? `<img src="${h(url)}" alt="Photo of the item">` : '<img class="mark" src="mark.svg" alt="">';
+  const box = $('fiPhoto').nextElementSibling, rm = box.querySelector('.link');
+  if (url && !rm) box.insertAdjacentHTML('beforeend', '<button type="button" class="link" onclick="removeItemPhoto()">Remove photo</button>');
+  if (!url && rm) rm.remove();
+}
+function readStock() {
+  const stock = [];
+  for (const chk of document.querySelectorAll('#sizeGrid input[data-size]')) {
+    if (!chk.checked) continue;
+    stock.push({ size: chk.dataset.size, qty: chk.closest('.sz').querySelector('input[type=number]').value });
   }
-  await change(sb.from('items').update({ [field]: v }).eq('id', Number(id)).select(), 'Saved.');
+  if ($('otherChk').checked) for (const r of document.querySelectorAll('#otherRows .orow')) {
+    const name = r.querySelector('.oname').value.trim(), qty = r.querySelector('.oqty').value;
+    if (!name && !(parseInt(qty, 10) > 0)) continue;   // an empty row is ignored
+    stock.push({ size: SIZES.find((s) => s.toLowerCase() === name.toLowerCase()) || name, qty });
+  }
+  if (!stock.length) stock.push({ size: '', qty: $('fiQty').value });
+  return stock.map((s) => ({ size: s.size, qty: s.qty === '' ? NaN : Number(s.qty) }));
+}
+async function saveItemForm() {
+  if (busy) return;
+  const err = (m) => { $('fiErr').textContent = m; return false; };
+  const it = form.id ? item(form.id) : null;
+  const name = $('fiName').value.trim(), code = $('fiCode').value.trim(), location = $('fiLoc').value.trim();
+  const stock = readStock();
+  if (!name) return err('Give the item a name.');
+  if (!/^\d+$/.test(code)) return err('The item number can only have numbers.');
+  const taken = db.items.find((i) => i.id !== form.id && normCode(i.code) === normCode(code));
+  if (taken) return err(`Item number ${code} is already used${taken.deleted ? ' by a deleted item' : ' by ' + taken.name}.`);
+  if (stock.some((s) => !s.size && stock.length > 1)) return err('Every size needs a name.');
+  if (stock.some((s) => !Number.isInteger(s.qty) || s.qty < 0)) return err('Quantities must be whole numbers, 0 or more.');
+  const names = stock.map((s) => s.size.toLowerCase());
+  if (new Set(names).size !== names.length) return err('Each size can only be listed once.');
+  if (it) {
+    const gone = stockOf(it.id).filter((s) => s.qty > 0 && !stock.some((n) => n.size === s.size));
+    if (gone.length && !(await ask(`Remove ${gone.map((s) => `${s.qty} × ${s.size || 'one size'}`).join(', ')} from the inventory? These sizes are no longer on the item.`, 'Remove them', { cancel: 'Go back' }))) return;
+  }
+  busy = true; $('fiSave').disabled = true; $('fiSave').textContent = 'Saving…'; err('');
+  const done = () => { busy = false; if ($('fiSave')) { $('fiSave').disabled = false; $('fiSave').textContent = it ? 'Save changes' : 'Add item'; } };
+  let photo = it?.photo || '';
+  let uploaded = '';
+  if (form.newPhoto) {
+    uploaded = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}.jpg`;
+    const { error } = await sb.storage.from(PHOTOS).upload(uploaded, form.newPhoto, { contentType: 'image/jpeg' });
+    if (error) { done(); return err('The photo didn\'t upload: ' + (error.message || 'try again') + '.'); }
+    photo = uploaded;
+  } else if (form.removePhoto) photo = '';
+  const { error } = await sb.rpc('save_item', { p_id: form.id ? Number(form.id) : null, p_code: code, p_name: name, p_location: location, p_photo: photo, p_stock: stock });
+  done();
+  if (error) {
+    if (uploaded) sb.storage.from(PHOTOS).remove([uploaded]);
+    return err(errText(error));
+  }
+  if (it?.photo && it.photo !== photo) sb.storage.from(PHOTOS).remove([it.photo]);   // the old photo is no longer used
+  if (form.newPhoto) photoUrls[photo] = { url: form.preview, until: Date.now() + 3600e3 };   // show it right away
+  form.preview = null;
+  toast(it ? `Saved ${name}.` : `Added ${name} as item #${code}.`);
+  form = null; adminTab = 'items'; go('admin');
 }
 async function deleteItem(id) {
   const it = item(id);
-  if (!(await ask(`Delete ${it.name}? It disappears from the inventory and can't be scanned. Past check-outs still show it.`, 'Delete'))) return;
+  if (!(await ask(`Delete ${it.name}? It leaves the inventory and can't be scanned. Past check-outs still show it.`, 'Delete', { cancel: 'Cancel', danger: true }))) return;
   await change(sb.from('items').update({ deleted: true }).eq('id', Number(id)).select(), `Deleted ${it.name}.`);
 }
 // Deleting an entry undoes its stock change: a check-out's items go back, a check-in's items come out.
@@ -781,19 +1026,20 @@ async function deleteEntry(id) {
   const t = db.tx.find((x) => x.id === id); if (!t) return;
   const out = t.dir === 'out';
   const per = {};
-  for (const l of t.lines) per[l.itemId] = (per[l.itemId] || 0) + l.qty;
-  const short = Object.entries(per).find(([iid, q]) => !out && item(iid).qty < q);
-  if (short) { const [iid, q] = short; toast(`Can't delete: this check-in added ${q} ${itemName(iid)}, but only ${item(iid).qty} are in stock now.`); return; }
-  const rows = Object.entries(per).map(([iid, q]) => {
-    const now = item(iid).qty, after = now + (out ? q : -q);
-    return `<li><strong>${out ? '+' : '−'}${q}</strong> ${h(itemName(iid))} <span class="muted">(${now} → ${after} in stock)</span></li>`;
+  for (const l of t.lines) { const k = l.itemId + '|' + l.size; per[k] = (per[k] || 0) + l.qty; }
+  const have = (k) => { const [iid, size] = k.split('|'); return stockQty(iid, size); };
+  const short = Object.entries(per).find(([k, q]) => !out && have(k) < q);
+  if (short) { const [k, q] = short; toast(`Can't delete: this check-in added ${q} ${keyName(k)}, but only ${have(k)} are in stock now.`); return; }
+  const rows = Object.entries(per).map(([k, q]) => {
+    const now = have(k), after = now + (out ? q : -q);
+    return `<li><strong>${out ? '+' : '−'}${q}</strong> ${h(keyName(k))} <span class="muted">(${now} → ${after} in stock)</span></li>`;
   }).join('');
   const ok = await ask(
     out ? `Delete this check-out by ${t.user}? These items go back into inventory:` : `Delete this check-in by ${t.user}? These items come out of inventory:`,
     'Confirm delete',
-    { cancel: 'Cancel', html: `<ul class="txlines">${rows}</ul><p class="small muted">The entry disappears from the history.</p>` });
+    { cancel: 'Cancel', danger: true, html: `<ul class="txlines">${rows}</ul><p class="small muted">The entry leaves the history.</p>` });
   if (!ok) return;
-  await change(sb.rpc('delete_transaction', { p_id: Number(id) }), out ? 'Deleted. The items are back in inventory.' : 'Deleted. The items were taken out of inventory.');
+  await change(sb.rpc('delete_transaction', { p_id: Number(id) }), out ? 'Deleted. The items are back in inventory.' : 'Deleted. The items came out of inventory.');
 }
 async function addEvent() {
   const name = $('neName').value.trim(); if (!name) return;
@@ -808,7 +1054,7 @@ async function dismissRequest(id) { await change(sb.from('event_requests').delet
 async function setEvent(id, status) {
   if (status === 'closed') {
     const out = Object.values(eventOutstanding(id)).reduce((s, n) => s + Math.max(n, 0), 0);
-    if (out && !(await ask(`${out} item(s) are still out for this event. Close it anyway?`, 'Close event'))) return;
+    if (out && !(await ask(`${out} item${out === 1 ? ' is' : 's are'} still out for this event. Close it anyway?`, 'Close event'))) return;
   }
   const patch = status === 'open' ? { status, close_requested_by: null } : { status };
   await change(sb.from('events').update(patch).eq('id', Number(id)).select());
@@ -822,7 +1068,7 @@ async function addMember() {
 async function setRole(i, role) {
   const m = db.members[i];
   if (role === 'member' && m.admin && adminCount() === 1) { toast('The team needs at least one admin.'); render(); return; }
-  if (role === 'member' && m.email === db.session && !(await ask('Remove your own admin access? You will no longer see the Admin area.', 'Remove my access'))) { render(); return; }
+  if (role === 'member' && m.email === db.session && !(await ask('Remove your own admin access? You won\'t see the Admin area anymore.', 'Remove my access'))) { render(); return; }
   await change(sb.from('members').update({ is_admin: role === 'admin' }).eq('email', m.email).select(), `${m.email} is now ${role === 'admin' ? 'an admin' : 'a member'}.`);
   if (!isAdmin()) go('home');
 }
@@ -830,20 +1076,20 @@ async function removeMember(i) {
   const m = db.members[i];
   if (m.admin && adminCount() === 1) { toast('The team needs at least one admin.'); return; }
   const self = m.email === db.session;
-  if (!(await ask(self ? 'Remove yourself from the team? You will be signed out and can\'t sign back in.' : `Remove ${m.email}? They won't be able to sign in. Their past check-outs stay in the history.`, 'Remove'))) return;
+  if (!(await ask(self ? 'Remove yourself from the team? You\'ll be signed out and can\'t sign back in.' : `Remove ${m.email}? They won't be able to sign in. Their past check-outs stay in the history.`, 'Remove', { danger: true }))) return;
   await change(sb.from('members').delete().eq('email', m.email).select(), `Removed ${m.email}.`);
 }
 function exportCsv() {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const rows = [['Date', 'Person', 'Direction', 'Type', 'Event', 'Donor', 'Item', 'Code', 'Quantity']];
+  const rows = [['Date', 'Person', 'Direction', 'Type', 'Event', 'Donor', 'Item', 'Item number', 'Size', 'Quantity']];
   for (const t of db.tx) for (const l of t.lines) {
     const it = item(l.itemId);
-    rows.push([t.at, t.user, t.dir === 'out' ? 'Check-out' : 'Check-in', TYPES[t.type].label, t.eventId ? ev(t.eventId)?.name : '', l.donor || t.donor, it?.name, it?.code, l.qty]);
+    rows.push([t.at, t.user, t.dir === 'out' ? 'Check-out' : 'Check-in', TYPES[t.type].label, t.eventId ? ev(t.eventId)?.name : '', l.donor || t.donor, it?.name, it?.code, l.size || 'One size', l.qty]);
   }
   saveFile('atlas-free-inventory-activity.csv', rows.map((r) => r.map(esc).join(',')).join('\n'), 'text/csv');
 }
 function downloadLabels() {
-  const cells = active().map((i) => `<div class="l"><img src="${qrUrl(i.code)}" alt=""><b>${h(i.name)}</b><span>${h(i.code)}</span></div>`).join('');
+  const cells = active().map((i) => `<div class="l"><img src="${qrUrl(i.code)}" alt=""><b>${h(i.name)}</b><span>Item #${h(i.code)}</span></div>`).join('');
   const doc = `<!doctype html><html><head><meta charset="utf-8"><title>Atlas Free QR labels</title><style>
 body{font-family:system-ui,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .l{border:1px dashed #bbb;border-radius:6px;padding:8px;text-align:center;break-inside:avoid}.l img{width:110px;height:110px;image-rendering:pixelated}
